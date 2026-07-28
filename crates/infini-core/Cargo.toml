@@ -1,0 +1,11 @@
+[package]
+name = "infini-core"
+version = "0.1.0"
+edition = "2021"
+description = "Island, residency, geometry and scheduling engine for Infini"
+license = "Apache-2.0"
+
+[lib]
+name = "infini_core"
+
+[dependencies]

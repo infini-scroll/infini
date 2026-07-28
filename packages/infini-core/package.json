@@ -1,0 +1,21 @@
+{
+    "name": "infini-core",
+    "version": "0.1.0",
+    "description": "Engine for Infini",
+    "license": "Apache-2.0",
+    "type": "module",
+    "sideEffects": false,
+    "exports": {
+        ".": {
+            "types": "./dist/index.d.ts",
+            "import": "./dist/index.js"
+        }
+    },
+    "files": [
+        "dist"
+    ],
+    "scripts": {
+        "clean": "shx rm -rf dist",
+        "build": "tsc -p tsconfig.json && shx cp -r ./src/runtime/wasm ./dist/runtime/"
+    }
+}

@@ -1,0 +1,41 @@
+{
+    "name": "infini-monorepo",
+    "version": "0.1.0",
+    "private": true,
+    "type": "module",
+    "packageManager": "pnpm@11.17.0+sha512.cca3cea332ad254bb84145f966d19f4879615210346fc92c79a047f23a0d7b3cca3c3792f0076ba1f1831d277efbcf0a9119b31a9a60eca7fb3d6231f331ef72",
+    "engines": {
+        "node": ">=20.19"
+    },
+    "scripts": {
+        "clean": "cargo clean && pnpm --recursive run clean",
+        "build": "pnpm run clean && pnpm run build:wasm && pnpm run build:packages",
+        "build:wasm": "node scripts/build-wasm.mjs",
+        "build:packages": "pnpm --recursive run build",
+        "docs": "node scripts/build-docs.mjs",
+        "test": "pnpm run typecheck && pnpm run test:rust && pnpm run test:unit && pnpm run test:browser",
+        "test:browser": "playwright test",
+        "test:browser:serve": "vite --config tests/browser/vite.config.ts",
+        "test:rust": "cargo test --workspace",
+        "test:unit": "node --import tsx --test packages/infini-core/test/controller.test.ts packages/infini-dom-support/test/coordinates.test.ts",
+        "typecheck": "tsc -p tsconfig.typecheck.json",
+        "format": "cargo fmt && prettier --write ."
+    },
+    "devDependencies": {
+        "@playwright/test": "1.61.1",
+        "@types/node": "^26.1.1",
+        "@types/react": "^19.2.17",
+        "@types/react-dom": "^19.2.3",
+        "@vitejs/plugin-react": "^6.0.4",
+        "infini-core": "workspace:*",
+        "infini-dom-support": "workspace:*",
+        "infini-react": "workspace:*",
+        "prettier": "^3.9.6",
+        "react": "^19.2.8",
+        "react-dom": "^19.2.8",
+        "shx": "^0.4.0",
+        "tsx": "^4.23.1",
+        "typescript": "^6.0.3",
+        "vite": "^8.1.5"
+    }
+}
