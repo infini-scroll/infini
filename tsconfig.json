@@ -6,7 +6,7 @@
     "include": [
         "prettier.config.ts",
         "playwright.config.ts",
-        "tests/browser/*.spec.ts",
+        "tests/browser/spec/*.spec.ts",
         "packages/**/test/*.test.ts"
     ]
 }

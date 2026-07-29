@@ -8,14 +8,14 @@ interface FixtureModule {
     run(): Promise<Record<string, unknown>> | Record<string, unknown>;
 }
 
-const fixtures = import.meta.glob<FixtureModule>("./*.{ts,tsx}");
-
+const fixtures = import.meta.glob<FixtureModule>("../suite/*.{ts,tsx}");
 async function run(): Promise<Record<string, unknown>> {
     const fixture = new URLSearchParams(window.location.search).get("fixture");
     const load =
         fixture == null
             ? undefined
-            : (fixtures[`./${fixture}.ts`] ?? fixtures[`./${fixture}.tsx`]);
+            : (fixtures[`../suite/${fixture}.ts`] ??
+              fixtures[`../suite/${fixture}.tsx`]);
     if (!load) {
         throw new Error(`unknown browser fixture: ${fixture ?? "(missing)"}`);
     }

@@ -8,7 +8,7 @@ import {
     rows,
     waitFor,
     type Row,
-} from "./support.js";
+} from "../vite/support.js";
 
 export async function run(): Promise<Record<string, unknown>> {
     const spacer = document.createElement("div");

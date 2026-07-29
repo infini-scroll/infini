@@ -4,8 +4,7 @@ import { createRoot } from "react-dom/client";
 import { type InfiniController } from "@infini-scroll/core";
 import { InfiniList, useInfini } from "@infini-scroll/react";
 
-import { config, rows, waitFor, type Row } from "./support.js";
-import React from "react";
+import { config, rows, waitFor, type Row } from "../vite/support.js";
 
 let mountedController: InfiniController<Row, number, number> | undefined;
 

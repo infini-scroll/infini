@@ -1,7 +1,7 @@
 import { type InfiniController } from "@infini-scroll/core";
 import { InfiniDomHost } from "@infini-scroll/dom-support";
 
-import { type Row } from "./support.js";
+import { type Row } from "../vite/support.js";
 
 export async function run(): Promise<Record<string, unknown>> {
     // A surface shrink may clamp scrollTop between the transaction's initial

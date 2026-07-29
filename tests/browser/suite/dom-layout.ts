@@ -3,7 +3,7 @@ import {
     disposeDomHarness,
     startDomHarness,
     waitFor,
-} from "./support.js";
+} from "../vite/support.js";
 
 export async function run(): Promise<Record<string, unknown>> {
     const harness = createDomHarness();
