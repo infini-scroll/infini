@@ -1,8 +1,8 @@
 import { StrictMode, useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
 
-import { type InfiniController } from "infini-core";
-import { InfiniList, useInfini } from "infini-react";
+import { type InfiniController } from "@infini-scroll/core";
+import { InfiniList, useInfini } from "@infini-scroll/react";
 
 import { config, rows, waitFor, type Row } from "./support.js";
 import React from "react";

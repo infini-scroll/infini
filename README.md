@@ -3,12 +3,12 @@
 ## Usage
 
 ```sh
-pnpm add infini-core infini-react
+pnpm add @infini-scroll/core @infini-scroll/react
 ```
 
 ```tsx
-import { initializeInfini } from "infini-core";
-import { InfiniList, useInfini } from "infini-react";
+import { initializeInfini } from "@infini-scroll/core";
+import { InfiniList, useInfini } from "@infini-scroll/react";
 
 await initializeInfini();
 const { controller, snapshot } = useInfini({

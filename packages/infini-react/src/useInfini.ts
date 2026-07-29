@@ -4,7 +4,7 @@ import {
     InfiniController,
     type ControllerConfig,
     type ItemId,
-} from "infini-core";
+} from "@infini-scroll/core";
 
 /**
  * Owns one controller for the mounted component lifetime and observes its state.

@@ -1,5 +1,5 @@
-import { type InfiniController } from "infini-core";
-import { InfiniDomHost } from "infini-dom-support";
+import { type InfiniController } from "@infini-scroll/core";
+import { InfiniDomHost } from "@infini-scroll/dom-support";
 
 import { type Row } from "./support.js";
 

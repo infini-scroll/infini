@@ -1,6 +1,6 @@
 /// <reference types="vite/client" />
 
-import { initializeInfini } from "infini-core";
+import { initializeInfini } from "@infini-scroll/core";
 
 import type { BrowserResult } from "./support.js";
 

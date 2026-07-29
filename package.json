@@ -1,5 +1,5 @@
 {
-    "name": "infini-monorepo",
+    "name": "@infini-scroll/monorepo",
     "version": "0.1.0",
     "private": true,
     "type": "module",
@@ -10,15 +10,15 @@
     "scripts": {
         "build": "pnpm run build:wasm && pnpm run build:packages",
         "build:wasm": "node scripts/build-wasm.mjs",
-        "build:packages": "pnpm --recursive --filter=!infini-demo run build",
-        "demo": "pnpm run build:wasm && pnpm --filter infini-demo dev",
+        "build:packages": "pnpm --recursive --filter='!@infini-scroll/demo' run build",
+        "demo": "pnpm run build:wasm && pnpm --filter @infini-scroll/demo dev",
         "docs": "node scripts/build-docs.mjs",
         "test": "pnpm run typecheck && pnpm run test:rust && pnpm run test:unit && pnpm run test:browser",
         "test:browser": "pnpm run build:wasm && playwright test",
         "test:browser:serve": "vite --config tests/browser/vite/vite.config.ts",
         "test:rust": "cargo test --workspace",
         "test:unit": "node --import tsx --test packages/infini-core/test/controller.test.ts packages/infini-dom-support/test/coordinates.test.ts",
-        "typecheck": "pnpm --recursive --filter=!infini-demo run typecheck",
+        "typecheck": "pnpm --recursive --filter='!@infini-scroll/demo' run typecheck",
         "format": "cargo fmt && prettier --write ."
     },
     "devDependencies": {
@@ -28,9 +28,9 @@
         "@types/react-dom": "^19.2.3",
         "@typescript/native-preview": "7.0.0-dev.20260707.2",
         "@vitejs/plugin-react": "^6.0.4",
-        "infini-core": "workspace:*",
-        "infini-dom-support": "workspace:*",
-        "infini-react": "workspace:*",
+        "@infini-scroll/core": "workspace:*",
+        "@infini-scroll/dom-support": "workspace:*",
+        "@infini-scroll/react": "workspace:*",
         "prettier": "^3.9.6",
         "react": "^19.2.8",
         "react-dom": "^19.2.8",

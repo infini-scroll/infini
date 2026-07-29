@@ -13,15 +13,17 @@
         "verbatimModuleSyntax": true,
         "types": ["node"],
         "paths": {
-            "infini-core": ["./packages/infini-core/src"],
-            "infini-core/*": ["./packages/infini-core/src/*"],
-            "infini-core/package.json": [
+            "@infini-scroll/core": ["./packages/infini-core/src"],
+            "@infini-scroll/core/*": ["./packages/infini-core/src/*"],
+            "@infini-scroll/core/package.json": [
                 "./packages/infini-core/src/package.json"
             ],
-            "infini-dom-support": ["./packages/infini-dom-support/src"],
-            "infini-dom-support/*": ["./packages/infini-dom-support/src/*"],
-            "infini-react": ["./packages/infini-react/src"],
-            "infini-react/*": ["./packages/infini-react/src/*"]
+            "@infini-scroll/dom-support": ["./packages/infini-dom-support/src"],
+            "@infini-scroll/dom-support/*": [
+                "./packages/infini-dom-support/src/*"
+            ],
+            "@infini-scroll/react": ["./packages/infini-react/src"],
+            "@infini-scroll/react/*": ["./packages/infini-react/src/*"]
         }
     }
 }

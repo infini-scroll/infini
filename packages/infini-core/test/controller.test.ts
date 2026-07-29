@@ -7,7 +7,7 @@ import {
     initializeInfini,
     type Page,
     type Provider,
-} from "infini-core";
+} from "@infini-scroll/core";
 
 test.before(async () => {
     const wasm = await readFile(

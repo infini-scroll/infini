@@ -8,8 +8,8 @@ import {
 } from "react";
 import { createPortal } from "react-dom";
 
-import type { InfiniController, ItemId } from "infini-core";
-import { InfiniDomHost, type ScrollHost } from "infini-dom-support";
+import type { InfiniController, ItemId } from "@infini-scroll/core";
+import { InfiniDomHost, type ScrollHost } from "@infini-scroll/dom-support";
 
 interface PortalSlot<TItem, TId extends ItemId> {
     handle: number;

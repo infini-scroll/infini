@@ -1,8 +1,13 @@
 {
-    "name": "infini-core",
+    "name": "@infini-scroll/core",
     "version": "0.1.0",
     "description": "Engine for Infini",
     "license": "Apache-2.0",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/infini-scroll/infini.git",
+        "directory": "packages/infini-core"
+    },
     "type": "module",
     "sideEffects": false,
     "exports": {

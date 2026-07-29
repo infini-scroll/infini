@@ -2,8 +2,8 @@ import {
     InfiniController,
     type ControllerConfig,
     type Page,
-} from "infini-core";
-import { InfiniDomHost } from "infini-dom-support";
+} from "@infini-scroll/core";
+import { InfiniDomHost } from "@infini-scroll/dom-support";
 
 export interface Row {
     id: number;

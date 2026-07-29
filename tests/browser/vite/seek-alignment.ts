@@ -1,5 +1,5 @@
-import { InfiniController } from "infini-core";
-import { InfiniDomHost } from "infini-dom-support";
+import { InfiniController } from "@infini-scroll/core";
+import { InfiniDomHost } from "@infini-scroll/dom-support";
 
 import {
     completePage,

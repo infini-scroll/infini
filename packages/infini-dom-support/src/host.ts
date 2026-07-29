@@ -4,7 +4,7 @@ import type {
     ItemId,
     LayoutItem,
     Snapshot,
-} from "infini-core";
+} from "@infini-scroll/core";
 import { measureHost, scrollHostTo, type ScrollHost } from "./coordinates.js";
 
 type Candidate<TItem, TId extends ItemId> = NonNullable<

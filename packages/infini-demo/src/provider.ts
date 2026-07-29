@@ -1,4 +1,4 @@
-import type { Direction, Provider, Page } from "infini-core";
+import type { Direction, Provider, Page } from "@infini-scroll/core";
 
 export interface DemoItem {
     id: number;

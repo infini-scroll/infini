@@ -1,7 +1,7 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 
-import { initializeInfini } from "infini-core";
+import { initializeInfini } from "@infini-scroll/core";
 
 import { App } from "./App.js";
 import "./styles.css";

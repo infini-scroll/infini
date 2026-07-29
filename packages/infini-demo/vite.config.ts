@@ -7,13 +7,13 @@ export default defineConfig({
     plugins: [react()],
     resolve: {
         alias: {
-            "infini-core": fileURLToPath(
+            "@infini-scroll/core": fileURLToPath(
                 new URL("../infini-core/src/index.ts", import.meta.url),
             ),
-            "infini-dom-support": fileURLToPath(
+            "@infini-scroll/dom-support": fileURLToPath(
                 new URL("../infini-dom-support/src/index.ts", import.meta.url),
             ),
-            "infini-react": fileURLToPath(
+            "@infini-scroll/react": fileURLToPath(
                 new URL("../infini-react/src/index.ts", import.meta.url),
             ),
         },

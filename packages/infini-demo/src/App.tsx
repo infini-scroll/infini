@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-import { InfiniList, useInfini } from "infini-react";
+import { InfiniList, useInfini } from "@infini-scroll/react";
 
 import { RandomItemProvider, type DemoItem } from "./provider.js";
 
@@ -86,7 +86,9 @@ export function App() {
         <main className="app-shell">
             <header className="hero">
                 <div>
-                    <p className="eyebrow">Vite · React · infini-react</p>
+                    <p className="eyebrow">
+                        Vite · React · @infini-scroll/react
+                    </p>
                     <h1>An endless field of color.</h1>
                 </div>
                 <p className="intro">
