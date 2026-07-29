@@ -48,3 +48,5 @@ if (build.error) throw build.error;
 if (build.status !== 0) process.exit(build.status ?? 1);
 
 rmSync(path.join(outputDirectory, "package.json"), { force: true });
+rmSync(path.join(outputDirectory, ".gitignore"), { force: true }); // .gitignore breaks npm publish.
+rmSync(path.join(outputDirectory, "README.md"), { force: true });

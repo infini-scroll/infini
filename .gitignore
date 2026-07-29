@@ -3,4 +3,5 @@
 
 # dist
 packages/*/dist/
+packages/infini-core/src/runtime/wasm/
 target/
