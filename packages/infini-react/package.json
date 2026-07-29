@@ -15,8 +15,8 @@
         "dist"
     ],
     "scripts": {
-        "clean": "shx rm -rf dist",
-        "build": "tsc -p tsconfig.json"
+        "build": "shx rm -rf dist && tsgo -p tsconfig.build.json",
+        "typecheck": "tsgo -p tsconfig.json"
     },
     "dependencies": {
         "infini-core": "workspace:^",

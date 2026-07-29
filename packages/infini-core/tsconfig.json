@@ -1,9 +1,8 @@
+// Got picked up in development/testing environments.
 {
     "extends": "../../tsconfig.base.json",
     "compilerOptions": {
-        "outDir": "dist",
-        "rootDir": "src",
-        "tsBuildInfoFile": "dist/.tsbuildinfo"
+        "noEmit": true
     },
     "include": ["src/**/*.ts"]
 }

@@ -14,7 +14,7 @@ export default defineConfig({
     },
     webServer: {
         command: "pnpm run test:browser:serve",
-        url: "http://127.0.0.1:4173/browser-fixture.html",
+        url: "http://127.0.0.1:4173/host.html",
         reuseExistingServer: !process.env.CI,
         timeout: 120_000,
     },

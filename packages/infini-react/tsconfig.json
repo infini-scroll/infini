@@ -1,10 +1,9 @@
+// Got picked up in development/testing environments.
 {
     "extends": "../../tsconfig.base.json",
     "compilerOptions": {
         "jsx": "react-jsx",
-        "outDir": "dist",
-        "rootDir": "src",
-        "tsBuildInfoFile": "dist/.tsbuildinfo"
+        "noEmit": true
     },
-    "include": ["src/**/*.ts", "src/**/*.tsx"]
+    "include": ["src/**/*.ts"]
 }

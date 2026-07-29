@@ -16,11 +16,13 @@ export async function runFixture(
         pageErrors.push(error.stack ?? error.message);
     });
 
-    await page.goto(
-        `/browser-fixture.html?fixture=${encodeURIComponent(fixture)}`,
+    await page.goto(`/host.html?fixture=${encodeURIComponent(fixture)}`);
+    await page.waitForFunction(
+        //@ts-ignore
+        () => window.__infiniResult != null,
     );
-    await page.waitForFunction(() => window.__infiniResult != null);
     const result = await page.evaluate<BrowserResult | undefined>(
+        //@ts-ignore
         () => window.__infiniResult,
     );
 

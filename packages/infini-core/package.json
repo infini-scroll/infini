@@ -15,7 +15,7 @@
         "dist"
     ],
     "scripts": {
-        "clean": "shx rm -rf dist",
-        "build": "tsc -p tsconfig.json && shx cp -r ./src/runtime/wasm ./dist/runtime/"
+        "build": "shx rm -rf dist && tsgo -p tsconfig.build.json && shx cp -r ./src/runtime/wasm ./dist/runtime/",
+        "typecheck": "tsgo -p tsconfig.json"
     }
 }
