@@ -73,9 +73,10 @@ controller.dispose();
 ### 视图和布局
 
 - `setView()`：提交 host-local scroll、viewport、inset 和可选 overscan；
+- `acknowledgeScrollCorrection()`：回传 correction 应用后的实际 host geometry，不表示新滚动意图；
 - `measure()`：批量提交 handle 高度，返回实际改变数；
 - `captureAnchor()`：在几何 mutation 前捕获补偿水位线；
-- `takeScrollCorrection()`：仅物理执行层消费绝对局部 scroll 目标；
+- `takeScrollCorrection()`：仅物理执行层消费绝对局部 scroll 目标，应用后必须显式 ACK；
 - `commitLayout()`：ACK 某 revision 已挂载的 handle 集合；
 - `getVisibleItem()`：只读当前水位线 item，不改变补偿状态。
 

@@ -129,7 +129,6 @@ export class InfiniController<
     private candidatePreparer: CandidatePreparer<TItem, TId> | null = null;
     private view: RawViewMetrics;
     private snapshotCache: Snapshot<TItem, TId> | null = null;
-    private needsViewAck = false;
     private engineReady = false;
     private layoutBeforeOverride: number | null;
     private layoutAfterOverride: number | null;
@@ -239,33 +238,35 @@ export class InfiniController<
      *
      * @remarks Omitted insets retain their previous value. Explicit Layout
      * overscan becomes a persistent override; otherwise each side defaults to the
-     * current physical viewport. A view submission also acknowledges an applied
-     * scroll correction.
+     * current physical viewport.
      */
     setView(input: ViewInput): void {
         this.assertLive();
-        if (input.layoutBefore != null) {
-            this.layoutBeforeOverride = input.layoutBefore;
-        }
-        if (input.layoutAfter != null) {
-            this.layoutAfterOverride = input.layoutAfter;
-        }
-        const next: RawViewMetrics = {
-            scroll: input.scroll,
-            viewport: input.viewport,
-            insetStart: input.paddingStart ?? this.view.insetStart,
-            insetEnd: input.paddingEnd ?? this.view.insetEnd,
-            layoutBefore: this.layoutBeforeOverride ?? input.viewport,
-            layoutAfter: this.layoutAfterOverride ?? input.viewport,
-        };
+        const next = this.normalizeViewInput(input);
         const unchanged = Object.entries(next).every(
             ([key, value]) =>
                 Math.abs(value - this.view[key as keyof RawViewMetrics]) < 0.01,
         );
-        if (unchanged && !this.needsViewAck) return;
-        this.needsViewAck = false;
+        if (unchanged) return;
         this.view = next;
         if (this.engineReady) this.engine.setView(this.view);
+        this.publish();
+        this.pumpEffects();
+    }
+
+    /**
+     * Acknowledges the observed host geometry after applying a scroll correction.
+     *
+     * @remarks Only the physical executor should call this after consuming
+     * {@link takeScrollCorrection}. Unlike {@link setView}, this does not express
+     * a new scroll intent and cannot start a predictive seek.
+     */
+    acknowledgeScrollCorrection(input: ViewInput): void {
+        this.assertLive();
+        this.view = this.normalizeViewInput(input);
+        if (this.engineReady) {
+            this.engine.acknowledgeScrollCorrection(this.view);
+        }
         this.publish();
         this.pumpEffects();
     }
@@ -415,14 +416,13 @@ export class InfiniController<
      *
      * @returns Target scroll in CSS pixels, or `null` when no correction is due.
      * @remarks Only the physical executor should call this. It must apply the
-     * target and then call {@link setView} with the corrected metrics.
+     * target and then call {@link acknowledgeScrollCorrection} with the observed
+     * metrics.
      */
     takeScrollCorrection(): number | null {
         this.assertLive();
         this.ensureEngine();
-        const correction = this.engine.takeScrollCorrection();
-        if (correction != null) this.needsViewAck = true;
-        return correction;
+        return this.engine.takeScrollCorrection();
     }
 
     /**
@@ -1159,6 +1159,23 @@ export class InfiniController<
         });
         this.engine.setView(this.view);
         this.engineReady = true;
+    }
+
+    private normalizeViewInput(input: ViewInput): RawViewMetrics {
+        if (input.layoutBefore != null) {
+            this.layoutBeforeOverride = input.layoutBefore;
+        }
+        if (input.layoutAfter != null) {
+            this.layoutAfterOverride = input.layoutAfter;
+        }
+        return {
+            scroll: input.scroll,
+            viewport: input.viewport,
+            insetStart: input.paddingStart ?? this.view.insetStart,
+            insetEnd: input.paddingEnd ?? this.view.insetEnd,
+            layoutBefore: this.layoutBeforeOverride ?? input.viewport,
+            layoutAfter: this.layoutAfterOverride ?? input.viewport,
+        };
     }
 
     private log(event: string, detail: Record<string, unknown>): void {

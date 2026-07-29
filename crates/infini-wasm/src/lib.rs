@@ -79,6 +79,7 @@ export interface InfiniEngine {
     staleMissLimit?: number;
   }): void;
   setView(view: RawViewMetrics): void;
+  acknowledgeScrollCorrection(view: RawViewMetrics): void;
   beginBootstrap(targetToken?: number): number;
   beginSeek(direction: "before" | "after", targetToken?: number): number;
   takeEffects(): RawEffect[];
@@ -367,6 +368,17 @@ fn items(input: Vec<BindingItem>, fallback: f64) -> Vec<Item> {
         .collect()
 }
 
+fn view_metrics(input: BindingView) -> ViewMetrics {
+    ViewMetrics {
+        scroll: input.scroll,
+        viewport: input.viewport,
+        inset_start: input.inset_start,
+        inset_end: input.inset_end,
+        layout_before: input.layout_before,
+        layout_after: input.layout_after,
+    }
+}
+
 fn serialize<T: Serialize>(value: &T) -> JsValue {
     serde_wasm_bindgen::to_value(value).expect("binding output must be serializable")
 }
@@ -411,14 +423,16 @@ impl InfiniEngine {
     #[wasm_bindgen(js_name = setView, skip_typescript)]
     pub fn set_view(&mut self, input: JsValue) -> Result<(), JsValue> {
         let input: BindingView = serde_wasm_bindgen::from_value(input)?;
-        self.engine.set_view(ViewMetrics {
-            scroll: input.scroll,
-            viewport: input.viewport,
-            inset_start: input.inset_start,
-            inset_end: input.inset_end,
-            layout_before: input.layout_before,
-            layout_after: input.layout_after,
-        });
+        self.engine.set_view(view_metrics(input));
+        Ok(())
+    }
+
+    /// Acknowledges the observed landing after applying a scroll correction.
+    #[wasm_bindgen(js_name = acknowledgeScrollCorrection, skip_typescript)]
+    pub fn acknowledge_scroll_correction(&mut self, input: JsValue) -> Result<(), JsValue> {
+        let input: BindingView = serde_wasm_bindgen::from_value(input)?;
+        self.engine
+            .acknowledge_scroll_correction(view_metrics(input));
         Ok(())
     }
 

@@ -56,7 +56,7 @@
 - [ ] Candidate 激活时先完成 Stale 合并，再按最终 Main 序列恢复 target alignment。
 - [ ] 同一 frame 的几何变化共享 anchor。
 - [ ] 待应用 correction 参与窗口计算，并屏蔽旧 scroll 调度。
-- [ ] Correction 写入后必须 setView ACK。
+- [ ] Correction 写入后必须调用专用 ACK API 回传实际 host geometry。
 - [ ] Layout commit 必须携带当前 revision 和精确 handles。
 - [ ] 删除 anchor 选择后继或边界 fallback。
 - [ ] Focus 行 pin，失焦及时 unpin。

@@ -148,6 +148,6 @@ React 不能安全地让外部 DOM 执行器任意移动它直接管理的列表
 - 用 CSS scroll anchoring 与框架补偿同时工作：会双重修正，应关闭 surface 的原生 anchoring。
 - Staging 宽度不同：首次测量无效，激活后闪跳。
 - cloneNode 后提交：节点、焦点、React state 全部丢失。
-- correction 后未 setView：核心停在屏障或产生错误窗口。
+- correction 后未调用 `acknowledgeScrollCorrection`：核心停在屏障或产生错误窗口。
 - sticky 已占位又传 padding：可见范围被重复缩小。
 - element host 未减 clientTop：所有定位恒定偏移一个边框宽度。

@@ -18,7 +18,7 @@ export async function run(): Promise<Record<string, unknown>> {
     surface.style.height = "1000px";
     host.scrollTop = 800;
 
-    const views: number[] = [];
+    const correctionAcks: number[] = [];
     let correctionPending = true;
     const snapshot = {
         surfaceExtent: 200,
@@ -30,7 +30,9 @@ export async function run(): Promise<Record<string, unknown>> {
         debug: undefined,
         subscribe: () => () => {},
         setCandidatePreparer: () => () => {},
-        setView: ({ scroll }: { scroll: number }) => views.push(scroll),
+        setView: () => {},
+        acknowledgeScrollCorrection: ({ scroll }: { scroll: number }) =>
+            correctionAcks.push(scroll),
         getSnapshot: () => snapshot,
         commitLayout: () => true,
         takeScrollCorrection: () => {
@@ -53,7 +55,7 @@ export async function run(): Promise<Record<string, unknown>> {
 
     dom.flushNow();
     const clampedLanding = host.scrollTop;
-    const acknowledgedScroll = views[views.length - 1];
+    const acknowledgedScroll = correctionAcks[correctionAcks.length - 1];
     if (
         Math.abs(clampedLanding - 100) > 1 ||
         acknowledgedScroll !== clampedLanding

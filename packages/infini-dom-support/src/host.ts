@@ -846,7 +846,10 @@ export class InfiniDomHost<
             surfaceOffset: debugNumber(appliedMetrics.surfaceOffset),
             ...this.physicalHostState(),
         });
-        this.setControllerView(appliedMetrics, appliedMetrics.localScroll);
+        this.acknowledgeScrollCorrection(
+            appliedMetrics,
+            appliedMetrics.localScroll,
+        );
     }
 
     private logFrame(
@@ -956,6 +959,20 @@ export class InfiniDomHost<
         scroll: number,
     ): void {
         this.controller.setView({
+            scroll,
+            viewport: metrics.viewport,
+            paddingStart: this.paddingStart,
+            paddingEnd: this.paddingEnd,
+            layoutBefore: this.layoutBefore ?? metrics.viewport,
+            layoutAfter: this.layoutAfter ?? metrics.viewport,
+        });
+    }
+
+    private acknowledgeScrollCorrection(
+        metrics: ReturnType<typeof measureHost>,
+        scroll: number,
+    ): void {
+        this.controller.acknowledgeScrollCorrection({
             scroll,
             viewport: metrics.viewport,
             paddingStart: this.paddingStart,

@@ -77,7 +77,8 @@ Revision 不匹配或 handle 不属于主片段会返回 false。
 ## 7. 滚动补偿
 
 `capture_anchor(ratio)` 保存语义点。改变几何后，`take_scroll_correction` 返回绝对 local scroll
-目标并消费它。执行层写物理滚动，再调用 `set_view` ACK。没有 correction 时返回 None。
+目标并消费它。执行层写物理滚动，再调用 `acknowledge_scroll_correction` 回传实际落点。
+普通 `set_view` 只表达新的视图或滚动意图。没有 correction 时返回 None。
 
 ## 8. Island 观察
 

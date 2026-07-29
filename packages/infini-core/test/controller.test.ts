@@ -79,7 +79,10 @@ test("bootstrap exposes a 20 viewport runway and exact committed layout", async 
     await waitFor(() => instance.getSnapshot().phase.status === "ready");
     const correction = instance.takeScrollCorrection();
     assert.notEqual(correction, null);
-    instance.setView({ scroll: correction!, viewport: 100 });
+    instance.acknowledgeScrollCorrection({
+        scroll: correction!,
+        viewport: 100,
+    });
     const snapshot = instance.getSnapshot();
     assert.equal(snapshot.mainLength, 10);
     assert.equal(snapshot.mainExtent, 100);
@@ -217,7 +220,10 @@ test("candidate preparer measurements land before activation", async () => {
     await waitFor(() => instance.getSnapshot().phase.status === "ready");
     assert.equal(staged, 1);
     const correction = instance.takeScrollCorrection();
-    instance.setView({ scroll: correction ?? 0, viewport: 100 });
+    instance.acknowledgeScrollCorrection({
+        scroll: correction ?? 0,
+        viewport: 100,
+    });
     assert.equal(instance.getSnapshot().layoutItems[0]?.measured, true);
     instance.dispose();
 });
@@ -276,7 +282,10 @@ test("a newer jump detaches old work without globally invalidating its result", 
     instance.start();
     await waitFor(() => instance.getSnapshot().phase.status === "ready");
     const correction = instance.takeScrollCorrection() ?? 0;
-    instance.setView({ scroll: correction, viewport: 100 });
+    instance.acknowledgeScrollCorrection({
+        scroll: correction,
+        viewport: 100,
+    });
 
     const oldEffect = instance.jump(100);
     instance.jump(200);
@@ -341,7 +350,10 @@ test("a detached request failure cannot fail the current visible island", async 
     instance.start();
     await waitFor(() => instance.getSnapshot().phase.status === "ready");
     const correction = instance.takeScrollCorrection() ?? 0;
-    instance.setView({ scroll: correction, viewport: 100 });
+    instance.acknowledgeScrollCorrection({
+        scroll: correction,
+        viewport: 100,
+    });
     instance.jump(100);
     instance.jump(200);
     second.resolve({
@@ -378,7 +390,10 @@ test("edge failure is latched and retry reopens only that frontier", async () =>
     instance.start();
     await waitFor(() => instance.getSnapshot().phase.status === "ready");
     const correction = instance.takeScrollCorrection() ?? 0;
-    instance.setView({ scroll: correction, viewport: 100 });
+    instance.acknowledgeScrollCorrection({
+        scroll: correction,
+        viewport: 100,
+    });
     await waitFor(() => instance.getSnapshot().phase.status === "failed");
     assert.equal(fetches, 1);
     await new Promise((resolve) => setTimeout(resolve, 10));
@@ -432,7 +447,10 @@ test("Blank Predict Zone runs locateOffset then activates a measured island", as
     instance.start();
     await waitFor(() => instance.getSnapshot().phase.status === "ready");
     const correction = instance.takeScrollCorrection() ?? 0;
-    instance.setView({ scroll: correction, viewport: 100 });
+    instance.acknowledgeScrollCorrection({
+        scroll: correction,
+        viewport: 100,
+    });
     instance.setView({ scroll: 500, viewport: 100 });
     await waitFor(
         () =>
@@ -486,7 +504,7 @@ test("measurement during a before Blank Predict seek does not pull view to the f
     instance.setView({ scroll: 0, viewport: 100 });
     instance.start();
     await waitFor(() => instance.getSnapshot().phase.status === "ready");
-    instance.setView({
+    instance.acknowledgeScrollCorrection({
         scroll: instance.takeScrollCorrection()!,
         viewport: 100,
     });
@@ -531,7 +549,7 @@ test("rapid Blank Predict jumps keep only the latest landing in the foreground",
     });
     instance.start();
     await waitFor(() => instance.getSnapshot().phase.status === "ready");
-    instance.setView({
+    instance.acknowledgeScrollCorrection({
         scroll: instance.takeScrollCorrection()!,
         viewport: 100,
     });
@@ -599,7 +617,7 @@ test("a failed Blank Predict seek stays latched until retry", async () => {
     instance.setView({ scroll: 0, viewport: 100 });
     instance.start();
     await waitFor(() => instance.getSnapshot().phase.status === "ready");
-    instance.setView({
+    instance.acknowledgeScrollCorrection({
         scroll: instance.takeScrollCorrection()!,
         viewport: 100,
     });

@@ -284,12 +284,16 @@ impl Engine {
         self.settle();
     }
 
-    /// Submits host-local geometry, normalizes it, and advances the work loop.
+    /// Submits a new host-local view or scroll intent and advances the work loop.
     ///
-    /// Viewport or inset changes preserve a semantic top anchor. Calling this
-    /// after a physical scroll write acknowledges the pending correction.
+    /// Viewport or inset changes preserve a semantic top anchor. Identical
+    /// metrics are a no-op; correction landings must use
+    /// [`Self::acknowledge_scroll_correction`].
     pub fn set_view(&mut self, view: ViewMetrics) {
         let normalized = view.normalized();
+        if self.view == normalized {
+            return;
+        }
         let preserve_anchor = self.main.is_some()
             && self.scroll_correction.is_none()
             && (self.view.viewport != normalized.viewport
@@ -298,14 +302,26 @@ impl Engine {
         if preserve_anchor {
             self.capture_anchor(0.0);
         }
-        if self.view != normalized {
-            self.view = normalized;
-            self.bump_layout_revision();
-        }
+        self.view = normalized;
+        self.bump_layout_revision();
         if preserve_anchor {
             self.restore_anchor();
         }
         self.settle();
+    }
+
+    /// Acknowledges the observed host geometry after a scroll correction.
+    ///
+    /// This is not a new scroll intent. It resumes continuous edge loading but
+    /// never starts a predictive seek, even when the browser-clamped landing is
+    /// numerically different from the requested correction.
+    pub fn acknowledge_scroll_correction(&mut self, view: ViewMetrics) {
+        let normalized = view.normalized();
+        if self.view != normalized {
+            self.view = normalized;
+            self.bump_layout_revision();
+        }
+        self.settle_work(false);
     }
 
     /// Returns the most recently normalized host view.
@@ -1125,8 +1141,9 @@ impl Engine {
 
     /// Consumes the pending absolute surface-local scroll target.
     ///
-    /// The physical executor must write this value and then call [`Self::set_view`]
-    /// with corrected metrics before normal scheduling continues.
+    /// The physical executor must write this value and then call
+    /// [`Self::acknowledge_scroll_correction`] with the observed metrics before
+    /// normal scheduling continues.
     pub fn take_scroll_correction(&mut self) -> Option<f64> {
         let correction = self.scroll_correction.take();
         if correction.is_some() {
@@ -1146,11 +1163,15 @@ impl Engine {
     }
 
     fn settle(&mut self) {
+        self.settle_work(true);
+    }
+
+    fn settle_work(&mut self, allow_predictive_seek: bool) {
         self.recompute_resident();
         // A candidate activation or anchor restoration has produced a physical
         // scroll command. Scheduling against the pre-correction scrollTop would
         // create a spurious predictive seek. The DOM ACKs by applying the
-        // correction and sending the next SetView.
+        // correction and acknowledging the observed landing.
         if self.scroll_correction.is_some() {
             return;
         }
@@ -1162,9 +1183,14 @@ impl Engine {
             return;
         }
         match self.blank_zone() {
-            BlankZone::Before => self.schedule_seek(Direction::Before),
-            BlankZone::After => self.schedule_seek(Direction::After),
+            BlankZone::Before if allow_predictive_seek => {
+                self.schedule_seek(Direction::Before);
+            }
+            BlankZone::After if allow_predictive_seek => {
+                self.schedule_seek(Direction::After);
+            }
             BlankZone::None => self.schedule_edge_fetches(),
+            BlankZone::Before | BlankZone::After => {}
         }
     }
 
@@ -1980,7 +2006,7 @@ mod tests {
         );
         assert!(engine.commit_candidate(effect));
         let correction = engine.take_scroll_correction().unwrap();
-        engine.set_view(ViewMetrics {
+        engine.acknowledge_scroll_correction(ViewMetrics {
             scroll: correction,
             ..engine.view()
         });
@@ -1993,6 +2019,83 @@ mod tests {
         assert_eq!(engine.blank_extent(Direction::Before), 2000.0);
         assert_eq!(engine.blank_extent(Direction::After), 2000.0);
         assert_eq!(engine.surface_extent(), 4200.0);
+    }
+
+    #[test]
+    fn unchanged_zero_scroll_ack_does_not_restart_predictive_work() {
+        let mut engine = Engine::new(10.0);
+        engine.set_view(ViewMetrics {
+            scroll: 0.0,
+            viewport: 100.0,
+            layout_before: 50.0,
+            layout_after: 50.0,
+            ..ViewMetrics::default()
+        });
+        let bootstrap = engine.begin_bootstrap(0);
+        assert_eq!(
+            engine.commit_effect_items(
+                bootstrap,
+                &items(1, 20, 10.0),
+                false,
+                false,
+                1,
+                Alignment::Start,
+            ),
+            CommitDisposition::Candidate
+        );
+        assert!(engine.commit_candidate(bootstrap));
+        assert!(engine.take_scroll_correction().is_some());
+
+        engine.acknowledge_scroll_correction(engine.view());
+
+        assert!(!engine
+            .effects
+            .values()
+            .any(|effect| effect.kind == EffectKind::Seek));
+    }
+
+    #[test]
+    fn unchanged_set_view_skips_but_correction_ack_resumes_edge_fetching() {
+        let mut engine = Engine::new(10.0);
+        engine.set_view(ViewMetrics {
+            scroll: 0.0,
+            viewport: 100.0,
+            layout_before: 20.0,
+            layout_after: 20.0,
+            ..ViewMetrics::default()
+        });
+        engine.set_resident_padding(2, 2);
+        let bootstrap = engine.begin_bootstrap(0);
+        assert_eq!(
+            engine.commit_effect_items(
+                bootstrap,
+                &items(1, 10, 10.0),
+                true,
+                false,
+                1,
+                Alignment::Start,
+            ),
+            CommitDisposition::Candidate
+        );
+        assert!(engine.commit_candidate(bootstrap));
+        assert!(engine.take_scroll_correction().is_some());
+        assert!(!engine
+            .effects
+            .values()
+            .any(|effect| effect.kind == EffectKind::EdgeFetch));
+
+        engine.set_view(engine.view());
+
+        assert!(!engine
+            .effects
+            .values()
+            .any(|effect| effect.kind == EffectKind::EdgeFetch));
+
+        engine.acknowledge_scroll_correction(engine.view());
+
+        assert!(engine.effects.values().any(|effect| {
+            effect.kind == EffectKind::EdgeFetch && effect.direction == Direction::After
+        }));
     }
 
     #[test]
