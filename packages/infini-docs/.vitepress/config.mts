@@ -14,16 +14,10 @@ export default defineConfig({
     resolve: {
       alias: {
         "@infini-scroll/core": fileURLToPath(
-          new URL(
-            "../../infini/packages/infini-core/src/index.ts",
-            import.meta.url,
-          ),
+          new URL("../../infini-core/src/index.ts", import.meta.url),
         ),
         "@infini-scroll/dom-support": fileURLToPath(
-          new URL(
-            "../../infini/packages/infini-dom-support/src/index.ts",
-            import.meta.url,
-          ),
+          new URL("../../infini-dom-support/src/index.ts", import.meta.url),
         ),
       },
     },

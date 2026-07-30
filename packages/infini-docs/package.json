@@ -2,6 +2,11 @@
     "name": "@infini-scroll/docs",
     "private": true,
     "type": "module",
+    "dependencies": {
+        "@infini-scroll/core": "workspace:^",
+        "@infini-scroll/dom-support": "workspace:^",
+        "@infini-scroll/react": "workspace:^"
+    },
     "devDependencies": {
         "typescript": "6.0.3",
         "vitepress": "2.0.0-alpha.18"

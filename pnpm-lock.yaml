@@ -91,6 +91,16 @@ importers:
         version: 8.1.5(@types/node@26.1.1)(esbuild@0.28.1)(tsx@4.23.1)(yaml@2.9.0)
 
   packages/infini-docs:
+    dependencies:
+      '@infini-scroll/core':
+        specifier: workspace:^
+        version: link:../infini-core
+      '@infini-scroll/dom-support':
+        specifier: workspace:^
+        version: link:../infini-dom-support
+      '@infini-scroll/react':
+        specifier: workspace:^
+        version: link:../infini-react
     devDependencies:
       typescript:
         specifier: 6.0.3

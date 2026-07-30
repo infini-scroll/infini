@@ -2,30 +2,30 @@
 layout: home
 
 hero:
-  name: "Infini"
-  text: "A small DOM for a very long feed."
-  tagline: Virtual scrolling for bidirectional, variable-height content—without requiring a total count or a global item index.
-  image:
-    src: /infini-mark.svg
-    alt: Infini
-  actions:
-    - theme: brand
-      text: Introduction
-      link: /guide/introduction
-    - theme: alt
-      text: Playground
-      link: /playground
+    name: "Infini"
+    text: "The Engine\nfor Your Long Content."
+    tagline: Fast, coherent navigating through massive information — by controlling what stays in the viewport, and what stays in memory.
+    # image:
+    #     src: /infini-mark.svg
+    #     alt: Infini
+    actions:
+        - theme: brand
+          text: Introduction
+          link: /guide/introduction
+        - theme: alt
+          text: Playground
+          link: /playground
 
 features:
-  - icon: ↕
-    title: Scroll in both directions
-    details: Start around any item, fetch before and after, and jump to distant content without loading everything in between.
-  - icon: ◫
-    title: Variable-height rows
-    details: Real DOM measurements refine estimates while anchor compensation keeps the user's reading position steady.
-  - icon: ◌
-    title: Framework or headless
-    details: Use the React wrapper for the shortest path, or combine the controller with the framework-neutral DOM host.
+    - icon: ↕
+      title: Scroll in both directions
+      details: Start around any item, fetch before and after, and jump to distant content without loading everything in between.
+    - icon: ◫
+      title: Variable-height rows
+      details: Real DOM measurements refine estimates while anchor compensation keeps the user's reading position steady.
+    - icon: ◌
+      title: Framework or headless
+      details: Use the React wrapper for the shortest path, or combine the controller with the framework-neutral DOM host.
 ---
 
 ## What Infini is
