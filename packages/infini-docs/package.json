@@ -3,11 +3,20 @@
     "private": true,
     "type": "module",
     "dependencies": {
+        "@fortawesome/fontawesome-svg-core": "^7.3.1",
+        "@fortawesome/free-solid-svg-icons": "^7.3.1",
+        "@fortawesome/vue-fontawesome": "^3.3.3",
         "@infini-scroll/core": "workspace:^",
         "@infini-scroll/dom-support": "workspace:^",
-        "@infini-scroll/react": "workspace:^"
+        "@infini-scroll/react": "workspace:^",
+        "@types/react": "^19.2.17",
+        "@types/react-dom": "^19.2.3",
+        "react": "^19.2.8",
+        "react-dom": "^19.2.8"
     },
     "devDependencies": {
+        "monaco-editor": "^0.56.0",
+        "shiki": "^4.3.1",
         "typescript": "6.0.3",
         "vitepress": "2.0.0-alpha.18"
     },

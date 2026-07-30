@@ -1,174 +1,70 @@
 <script setup lang="ts">
-import { nextTick, onBeforeUnmount, onMounted, ref } from "vue";
+import {
+    computed,
+    nextTick,
+    onBeforeUnmount,
+    onMounted,
+    reactive,
+    ref,
+    useId,
+} from "vue";
+import * as React from "react";
+import * as ReactDomClient from "react-dom/client";
 import * as InfiniCore from "@infini-scroll/core";
 import * as InfiniDomSupport from "@infini-scroll/dom-support";
+import * as InfiniReact from "@infini-scroll/react";
+import { playgrounds } from "../../sources";
+import type * as Monaco from "monaco-editor";
 
-const STARTER_CODE = `import {
-  InfiniController,
-  initializeInfini,
-  type Direction,
-  type Page,
-  type Provider,
-} from "@infini-scroll/core";
-import { InfiniDomHost } from "@infini-scroll/dom-support";
+type PlaygroundName = (typeof playgrounds)[number]["name"];
 
-type Item = {
-  id: number;
-  title: string;
-  body: string;
-  estimatedHeight: number;
-};
+function getPlayground(name: PlaygroundName) {
+    const playground = playgrounds.find((candidate) => candidate.name === name);
+    if (!playground) {
+        throw new Error(`Missing "${name}" playground configuration.`);
+    }
+    return playground;
+}
 
+const initialPlayground =
+    playgrounds.find((playground) => playground.default) ?? playgrounds[0];
+const initialSources = Object.fromEntries(
+    playgrounds.map((playground) => [playground.name, playground.source]),
+) as Record<PlaygroundName, string>;
+
+const CORE_DECLARATIONS = import.meta.glob<string>(
+    "../../../../infini-core/dist/**/*.d.ts",
+    { eager: true, import: "default", query: "?raw" },
+);
+const DOM_DECLARATIONS = import.meta.glob<string>(
+    "../../../../infini-dom-support/dist/**/*.d.ts",
+    { eager: true, import: "default", query: "?raw" },
+);
+const REACT_DECLARATIONS = import.meta.glob<string>(
+    "../../../../infini-react/dist/**/*.d.ts",
+    { eager: true, import: "default", query: "?raw" },
+);
+const LIB_REACT_DECLARATIONS = import.meta.glob<string>(
+    "../../../node_modules/@types/react/**/*.d.ts",
+    {
+        eager: true,
+        import: "default",
+        query: "?raw",
+    },
+);
+const LIB_REACT_DOM_DECLARATIONS = import.meta.glob<string>(
+    "../../../node_modules/@types/react-dom/**/*.d.ts",
+    { eager: true, import: "default", query: "?raw" },
+);
+const PLAYGROUND_TYPES = `
 type PlaygroundContext = {
   surface: HTMLElement;
   viewport: HTMLElement;
   report(message: string): void;
 };
-
-const FIRST_ID = -2000;
-const LAST_ID = 2000;
-
-function itemAt(id: number): Item {
-  const lines = Math.abs((id * 13 + 5) % 4);
-  return {
-    id,
-    title: \`Record \${id}\`,
-    body:
-      lines === 0
-        ? "A compact row."
-        : "Variable-height content is measured after rendering. ".repeat(lines),
-    estimatedHeight: 68 + lines * 22,
-  };
-}
-
-function around(center: number, targetSize: number): Page<Item> {
-  const current = Math.max(FIRST_ID, Math.min(LAST_ID, Math.round(center)));
-  const ids = [current];
-  let extent = itemAt(current).estimatedHeight;
-  let distance = 1;
-
-  while (extent < Math.max(1200, targetSize)) {
-    if (current - distance >= FIRST_ID) {
-      ids.unshift(current - distance);
-      extent += itemAt(current - distance).estimatedHeight;
-    }
-    if (current + distance <= LAST_ID) {
-      ids.push(current + distance);
-      extent += itemAt(current + distance).estimatedHeight;
-    }
-    if (
-      current - distance < FIRST_ID &&
-      current + distance > LAST_ID
-    ) break;
-    distance += 1;
-  }
-
-  return {
-    items: ids.map(itemAt),
-    exhaustedBefore: ids[0] === FIRST_ID,
-    exhaustedAfter: ids[ids.length - 1] === LAST_ID,
-  };
-}
-
-function fromEdge(
-  cursor: number,
-  direction: Direction,
-  targetSize: number,
-): Page<Item> {
-  const ids = [cursor];
-  const step = direction === "before" ? -1 : 1;
-  let next = cursor + step;
-  let extent = itemAt(cursor).estimatedHeight;
-
-  while (
-    extent < Math.max(1200, targetSize) &&
-    next >= FIRST_ID &&
-    next <= LAST_ID
-  ) {
-    direction === "before" ? ids.unshift(next) : ids.push(next);
-    extent += itemAt(next).estimatedHeight;
-    next += step;
-  }
-
-  return {
-    items: ids.map(itemAt),
-    exhaustedBefore: ids[0] === FIRST_ID,
-    exhaustedAfter: ids[ids.length - 1] === LAST_ID,
-  };
-}
-
-const provider: Provider<Item, number, number> = {
-  async bootstrap({ cursor, targetSize, signal }) {
-    signal.throwIfAborted();
-    return around(cursor ?? 0, targetSize);
-  },
-
-  async fetch({ cursor, direction, targetSize, signal }) {
-    signal.throwIfAborted();
-    return fromEdge(cursor, direction, targetSize);
-  },
-
-  async locateOffset({ anchor, signedItemOffset, signal }) {
-    signal.throwIfAborted();
-    const targetId = Math.max(
-      FIRST_ID,
-      Math.min(LAST_ID, anchor.id + Math.trunc(signedItemOffset)),
-    );
-    return { cursor: targetId, targetId };
-  },
-};
-
-export async function mount({
-  surface,
-  viewport,
-  report,
-}: PlaygroundContext) {
-  await initializeInfini();
-
-  const controller = new InfiniController<Item, number, number>({
-    provider,
-    ops: {
-      getId: (item) => item.id,
-      getCursor: (item) => item.id,
-    },
-    estimateSize: (item) => item.estimatedHeight,
-    defaultItemEstimate: 92,
-    initial: { cursor: 0 },
-    residentBefore: 16,
-    residentAfter: 16,
-  });
-
-  const host = new InfiniDomHost({
-    controller,
-    container: surface,
-    scrollHost: viewport,
-
-    createRow(item) {
-      const row = document.createElement("article");
-      row.className = "play-row";
-      row.innerHTML =
-        \`<strong>\${item.title}</strong><span>\${item.body}</span>\`;
-      return row;
-    },
-  });
-
-  const unsubscribe = controller.subscribe(() => {
-    const state = controller.getSnapshot();
-    report(
-      \`\${state.phase.status} · \${state.layoutItems.length} mounted · \` +
-      \`\${state.mainLength} known\`,
-    );
-  });
-
-  controller.start();
-
-  return () => {
-    unsubscribe();
-    host.dispose();
-    controller.dispose();
-  };
-}
 `;
+
+defineProps<{ inline?: boolean }>();
 
 interface PlaygroundModule {
     mount?: (context: {
@@ -178,12 +74,55 @@ interface PlaygroundModule {
     }) => void | (() => void) | Promise<void | (() => void)>;
 }
 
-const code = ref(STARTER_CODE);
+const selectedName = ref<PlaygroundName>(initialPlayground.name);
+const selectedPlayground = computed(() => getPlayground(selectedName.value));
+const sources = reactive<Record<PlaygroundName, string>>(initialSources);
+const code = computed({
+    get: () => sources[selectedName.value],
+    set: (value: string) => {
+        sources[selectedName.value] = value;
+    },
+});
 const status = ref("Preparing editor…");
 const running = ref(false);
+const editorId = useId();
+const editorElement = ref<HTMLElement | null>(null);
+const playground = ref<HTMLElement | null>(null);
 const viewport = ref<HTMLElement | null>(null);
 const surface = ref<HTMLElement | null>(null);
+const stacked = ref(false);
+const codeDrawerOpen = ref(true);
 let disposeDemo: (() => void) | null = null;
+let resizeObserver: ResizeObserver | null = null;
+let themeObserver: MutationObserver | null = null;
+let editor: Monaco.editor.IStandaloneCodeEditor | null = null;
+let editorModels: Map<PlaygroundName, Monaco.editor.ITextModel> | null = null;
+let typeLibraries: Array<{ dispose(): void }> = [];
+
+function registerPackageTypes(
+    monaco: typeof import("monaco-editor"),
+    packageName: string,
+    declarations: Record<string, string>,
+) {
+    for (const [fileName, contents] of Object.entries(declarations)) {
+        const relativeName =
+            fileName.split("/dist/")[1] ||
+            fileName.split(`/${packageName}/`)[1];
+        typeLibraries.push(
+            monaco.typescript.typescriptDefaults.addExtraLib(
+                contents,
+                `file:///node_modules/${packageName}/${relativeName}`,
+            ),
+        );
+    }
+}
+
+function updateLayout(width: number) {
+    const nextStacked = width <= 760;
+    if (nextStacked === stacked.value) return;
+    stacked.value = nextStacked;
+    codeDrawerOpen.value = !nextStacked;
+}
 
 function diagnosticText(
     ts: typeof import("typescript"),
@@ -201,14 +140,142 @@ function diagnosticText(
 }
 
 function reset() {
-    code.value = STARTER_CODE;
+    const playground = selectedPlayground.value;
+    sources[playground.name] = playground.source;
+    editorModels?.get(playground.name)?.setValue(playground.source);
     void run();
+}
+
+async function selectPlayground(name: PlaygroundName) {
+    if (name === selectedName.value || running.value) return;
+    selectedName.value = name;
+    await nextTick();
+    if (editor && editorModels) {
+        editor.setModel(editorModels.get(name) ?? null);
+        editor.updateOptions({
+            ariaLabel: `Editable ${selectedPlayground.value.label} demo`,
+        });
+        editor.focus();
+    }
+    await run();
+}
+
+async function mountEditor() {
+    if (!editorElement.value) return;
+
+    const [monaco, editorWorkerModule, tsWorkerModule] = await Promise.all([
+        import("monaco-editor"),
+        import("monaco-editor/editor/editor.worker.js?worker"),
+        import("monaco-editor/language/typescript/ts.worker.js?worker"),
+    ]);
+    const EditorWorker = editorWorkerModule.default;
+    const TypeScriptWorker = tsWorkerModule.default;
+    Object.assign(globalThis, {
+        MonacoEnvironment: {
+            getWorker(_moduleId: string, label: string) {
+                return label === "typescript" || label === "javascript"
+                    ? new TypeScriptWorker()
+                    : new EditorWorker();
+            },
+        },
+    });
+
+    monaco.typescript.typescriptDefaults.setCompilerOptions({
+        allowNonTsExtensions: true,
+        baseUrl: "/",
+        jsx: monaco.typescript.JsxEmit.React,
+        lib: ["lib.es2022.d.ts", "lib.dom.d.ts", "lib.dom.iterable.d.ts"],
+        module: monaco.typescript.ModuleKind.ESNext,
+        moduleResolution: monaco.typescript.ModuleResolutionKind.NodeJs,
+        paths: {
+            "@infini-scroll/core": [
+                "node_modules/@infini-scroll/core/index.d.ts",
+            ],
+            "@infini-scroll/dom-support": [
+                "node_modules/@infini-scroll/dom-support/index.d.ts",
+            ],
+            "@infini-scroll/react": [
+                "node_modules/@infini-scroll/react/index.d.ts",
+            ],
+            react: ["node_modules/@types/react/index.d.ts"],
+            "react-dom": ["node_modules/@types/react-dom/index.d.ts"],
+        },
+        target: monaco.typescript.ScriptTarget.ESNext,
+    });
+    registerPackageTypes(monaco, "@infini-scroll/core", CORE_DECLARATIONS);
+    registerPackageTypes(
+        monaco,
+        "@infini-scroll/dom-support",
+        DOM_DECLARATIONS,
+    );
+    registerPackageTypes(monaco, "@infini-scroll/react", REACT_DECLARATIONS);
+    registerPackageTypes(monaco, "react", LIB_REACT_DECLARATIONS);
+    registerPackageTypes(monaco, "react-dom", LIB_REACT_DOM_DECLARATIONS);
+    typeLibraries.push(
+        monaco.typescript.typescriptDefaults.addExtraLib(
+            PLAYGROUND_TYPES,
+            "file:///node_modules/@types/playground/index.d.ts",
+        ),
+    );
+    editorModels = new Map(
+        playgrounds.map((playground) => [
+            playground.name,
+            monaco.editor.createModel(
+                sources[playground.name],
+                playground.language,
+                monaco.Uri.parse(`file:///${playground.fileName}`),
+            ),
+        ]),
+    );
+
+    const syncTheme = () => {
+        monaco.editor.setTheme(
+            document.documentElement.classList.contains("dark")
+                ? "vs-dark"
+                : "vs",
+        );
+    };
+    editor = monaco.editor.create(editorElement.value, {
+        model: editorModels.get(selectedName.value),
+        ariaLabel: `Editable ${selectedPlayground.value.label} demo`,
+        automaticLayout: true,
+        fontSize: 12,
+        lineHeight: 20,
+        minimap: { enabled: false },
+        padding: { top: 12, bottom: 12 },
+        scrollBeyondLastLine: false,
+        tabSize: 2,
+        theme: document.documentElement.classList.contains("dark")
+            ? "vs-dark"
+            : "vs",
+    });
+    editor.onDidChangeModelContent(() => {
+        const model = editor?.getModel();
+        if (!model || !editorModels) return;
+        for (const [name, candidate] of editorModels) {
+            if (model === candidate) {
+                sources[name] = model.getValue();
+                break;
+            }
+        }
+    });
+    editor.addAction({
+        id: "run-playground",
+        label: "Run Playground",
+        keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter],
+        run,
+    });
+    themeObserver = new MutationObserver(syncTheme);
+    themeObserver.observe(document.documentElement, {
+        attributes: true,
+        attributeFilter: ["class"],
+    });
 }
 
 async function run() {
     if (!surface.value || !viewport.value || running.value) return;
     running.value = true;
-    status.value = "Compiling TypeScript…";
+    status.value = `Compiling ${selectedPlayground.value.label}…`;
 
     try {
         disposeDemo?.();
@@ -222,8 +289,9 @@ async function run() {
                 module: ts.ModuleKind.CommonJS,
                 target: ts.ScriptTarget.ES2022,
                 esModuleInterop: true,
+                jsx: ts.JsxEmit.React,
             },
-            fileName: "playground.ts",
+            fileName: selectedPlayground.value.fileName,
             reportDiagnostics: true,
         });
 
@@ -240,11 +308,14 @@ async function run() {
         const builtIns: Record<string, unknown> = {
             "@infini-scroll/core": InfiniCore,
             "@infini-scroll/dom-support": InfiniDomSupport,
+            "@infini-scroll/react": InfiniReact,
+            react: React,
+            "react-dom/client": ReactDomClient,
         };
         const requireBuiltIn = (name: string) => {
             if (name in builtIns) return builtIns[name];
             throw new Error(
-                `Cannot import "${name}". This playground only provides @infini-scroll/* libraries.`,
+                `Cannot import "${name}". This playground only provides React and @infini-scroll/* libraries.`,
             );
         };
         const AsyncFunction = Object.getPrototypeOf(
@@ -280,22 +351,63 @@ async function run() {
 }
 
 onMounted(async () => {
+    if (playground.value) {
+        updateLayout(playground.value.getBoundingClientRect().width);
+        resizeObserver = new ResizeObserver(([entry]) => {
+            updateLayout(entry.contentRect.width);
+        });
+        resizeObserver.observe(playground.value);
+    }
     await nextTick();
+    await mountEditor();
     await run();
 });
 
 onBeforeUnmount(() => {
+    resizeObserver?.disconnect();
+    resizeObserver = null;
+    themeObserver?.disconnect();
+    themeObserver = null;
+    editor?.dispose();
+    editor = null;
+    for (const model of editorModels?.values() ?? []) model.dispose();
+    editorModels = null;
+    for (const library of typeLibraries) library.dispose();
+    typeLibraries = [];
     disposeDemo?.();
     disposeDemo = null;
 });
 </script>
 
 <template>
-    <section class="code-playground" aria-label="Editable Infini playground">
+    <section
+        ref="playground"
+        class="code-playground"
+        :class="{
+            'is-inline': inline,
+            'is-code-drawer-open': codeDrawerOpen,
+        }"
+        aria-label="Editable Infini playground"
+    >
         <header class="code-playground-toolbar">
-            <div>
-                <strong>TypeScript Playground</strong>
-                <span>Built-ins: @infini-scroll/*</span>
+            <div class="code-playground-heading">
+                <strong>Playground</strong>
+                <div class="mode-picker" aria-label="Rendering adapter">
+                    <button
+                        v-for="playgroundOption in playgrounds"
+                        :key="playgroundOption.name"
+                        type="button"
+                        class="mode-button"
+                        :class="{
+                            active: selectedName === playgroundOption.name,
+                        }"
+                        :aria-pressed="selectedName === playgroundOption.name"
+                        :disabled="running"
+                        @click="selectPlayground(playgroundOption.name)"
+                    >
+                        {{ playgroundOption.label }}
+                    </button>
+                </div>
             </div>
             <div class="code-playground-actions">
                 <button type="button" class="secondary" @click="reset">
@@ -309,13 +421,23 @@ onBeforeUnmount(() => {
 
         <div class="code-playground-grid">
             <div class="code-playground-editor">
-                <div class="pane-label">demo.ts</div>
-                <textarea
-                    v-model="code"
-                    aria-label="Editable TypeScript demo"
-                    spellcheck="false"
-                    @keydown.ctrl.enter.prevent="run"
-                    @keydown.meta.enter.prevent="run"
+                <div class="pane-label">
+                    <span>{{ selectedPlayground.fileName }}</span>
+                    <button
+                        type="button"
+                        class="drawer-toggle"
+                        :aria-expanded="codeDrawerOpen"
+                        :aria-controls="editorId"
+                        @click="codeDrawerOpen = !codeDrawerOpen"
+                    >
+                        {{ codeDrawerOpen ? "Hide code" : "Show code" }}
+                    </button>
+                </div>
+                <div
+                    :id="editorId"
+                    ref="editorElement"
+                    class="monaco-host"
+                    :inert="stacked && !codeDrawerOpen"
                 />
             </div>
 
@@ -329,17 +451,25 @@ onBeforeUnmount(() => {
                 </div>
             </div>
         </div>
-
-        <footer>
-            Press <kbd>Ctrl</kbd>/<kbd>⌘</kbd> + <kbd>Enter</kbd> to run.
-            Compilation is local; imports other than
-            <code>@infini-scroll/*</code> are rejected.
-        </footer>
     </section>
 </template>
 
+<style>
+.VPDoc .content {
+    margin: 0;
+    padding: 0;
+    max-width: none !important;
+}
+</style>
+
 <style scoped>
 .code-playground {
+    --play-bg: #fff;
+    --play-row-bg: #f7f7f8;
+    --play-border: #dedee3;
+    --play-text: #25252a;
+    --play-muted: #686870;
+    container-type: inline-size;
     overflow: hidden;
     margin: 28px 0;
     border: 1px solid var(--vp-c-divider);
@@ -348,8 +478,17 @@ onBeforeUnmount(() => {
     box-shadow: 0 18px 48px rgb(33 27 62 / 8%);
 }
 
+:global(.dark) .code-playground {
+    --play-bg: #1b1b1f;
+    --play-row-bg: #242429;
+    --play-border: #3b3b42;
+    --play-text: #ededf0;
+    --play-muted: #a6a6af;
+}
+
 .code-playground-toolbar {
     display: flex;
+    gap: 16px;
     align-items: center;
     justify-content: space-between;
     min-height: 58px;
@@ -357,19 +496,26 @@ onBeforeUnmount(() => {
     border-bottom: 1px solid var(--vp-c-divider);
 }
 
-.code-playground-toolbar > div:first-child {
-    display: grid;
-    gap: 2px;
+.code-playground-heading,
+.mode-picker,
+.code-playground-actions {
+    display: flex;
+    align-items: center;
 }
 
-.code-playground-toolbar span,
-.code-playground footer {
-    color: var(--vp-c-text-2);
-    font-size: 0.72rem;
+.code-playground-heading {
+    gap: 14px;
+}
+
+.mode-picker {
+    gap: 2px;
+    padding: 3px;
+    border: 1px solid var(--vp-c-divider);
+    border-radius: 9px;
+    background: var(--vp-c-bg-soft);
 }
 
 .code-playground-actions {
-    display: flex;
     gap: 8px;
 }
 
@@ -385,6 +531,18 @@ onBeforeUnmount(() => {
     cursor: pointer;
 }
 
+.code-playground button.mode-button {
+    padding: 5px 9px;
+    background: transparent;
+    color: var(--vp-c-text-2);
+}
+
+.code-playground button.mode-button.active {
+    background: var(--vp-c-bg);
+    box-shadow: 0 1px 4px rgb(0 0 0 / 10%);
+    color: var(--vp-c-brand-1);
+}
+
 .code-playground button.secondary {
     border: 1px solid var(--vp-c-divider);
     background: var(--vp-c-bg-soft);
@@ -398,13 +556,14 @@ onBeforeUnmount(() => {
 
 .code-playground-grid {
     display: grid;
-    grid-template-columns: minmax(0, 1.12fr) minmax(320px, 0.88fr);
+    grid-template-columns: minmax(0, 1.12fr) minmax(300px, 0.88fr);
     height: min(72vh, 680px);
     min-height: 500px;
 }
 
 .code-playground-editor,
 .code-playground-preview {
+    position: relative;
     display: grid;
     grid-template-rows: 38px minmax(0, 1fr);
     min-width: 0;
@@ -413,6 +572,10 @@ onBeforeUnmount(() => {
 
 .code-playground-editor {
     border-right: 1px solid var(--vp-c-divider);
+}
+
+.drawer-toggle {
+    display: none;
 }
 
 .pane-label {
@@ -443,23 +606,10 @@ onBeforeUnmount(() => {
     white-space: nowrap;
 }
 
-textarea {
+.monaco-host {
     width: 100%;
     height: 100%;
-    padding: 16px;
-    resize: none;
-    border: 0;
-    outline: 0;
-    background: #1f2024;
-    color: #e4e4e7;
-    font:
-        12px/1.65 ui-monospace,
-        SFMono-Regular,
-        Menlo,
-        Consolas,
-        monospace;
-    tab-size: 2;
-    white-space: pre;
+    min-height: 0;
 }
 
 .play-viewport {
@@ -467,14 +617,7 @@ textarea {
     min-height: 0;
     overflow: auto;
     overscroll-behavior: contain;
-    background:
-        linear-gradient(rgb(255 255 255 / 72%), rgb(255 255 255 / 72%)),
-        repeating-linear-gradient(
-            90deg,
-            transparent 0,
-            transparent 39px,
-            rgb(105 85 217 / 7%) 40px
-        );
+    background: var(--play-bg);
     scrollbar-color: #aaa4bf transparent;
     scrollbar-width: thin;
 }
@@ -484,55 +627,162 @@ textarea {
     outline-offset: -3px;
 }
 
-:deep(.play-row) {
-    display: grid;
-    gap: 5px;
-    width: calc(100% - 14px);
-    min-height: 58px;
-    margin: 5px 7px;
-    padding: 13px 16px;
-    border: 1px solid rgb(105 85 217 / 18%);
-    border-radius: 11px;
+:deep(.message-shell) {
+    width: 100%;
+    padding: 5px 12px;
     box-sizing: border-box;
-    background: #f0edff;
-    color: #29263b;
 }
 
-:deep(.play-row strong) {
-    font-size: 0.85rem;
+:deep(.message-row) {
+    margin: 0;
+    padding: 10px 12px;
+    border: 1px solid var(--play-border);
+    border-radius: 8px;
+    background: var(--play-row-bg);
+    color: var(--play-text);
+    font-size: 0.78rem;
+    line-height: 1.45;
 }
 
-:deep(.play-row span) {
-    color: #68637c;
-    font-size: 0.75rem;
-    line-height: 1.5;
+:deep(.message-row header) {
+    display: flex;
+    gap: 8px;
+    align-items: baseline;
 }
 
-.code-playground footer {
-    padding: 9px 14px;
-    border-top: 1px solid var(--vp-c-divider);
+:deep(.message-row time) {
+    color: var(--play-muted);
+    font-size: 0.7rem;
 }
 
-.code-playground footer code,
-.code-playground kbd {
-    font-size: inherit;
+:deep(.message-id) {
+    color: var(--play-muted);
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 0.7rem;
 }
 
-@media (max-width: 900px) {
+:deep(.message-row p) {
+    margin: 5px 0 0;
+}
+
+:deep(.message-row blockquote) {
+    margin: 0 0 8px;
+    padding: 5px 8px;
+    overflow: hidden;
+    border-left: 2px solid var(--vp-c-brand-1);
+    background: var(--play-bg);
+    color: var(--play-muted);
+    font-size: 0.7rem;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+:deep(.reply-link) {
+    width: 100%;
+    padding: 0;
+    overflow: hidden;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    font-weight: 500;
+    text-align: left;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+:deep(.reply-link:hover) {
+    text-decoration: underline;
+}
+
+:deep(.unread-divider) {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    margin: 3px 0 8px;
+    color: var(--vp-c-brand-1);
+    font-size: 0.68rem;
+    font-weight: 700;
+}
+
+:deep(.unread-divider)::before,
+:deep(.unread-divider)::after {
+    height: 1px;
+    flex: 1;
+    background: var(--vp-c-brand-1);
+    content: "";
+}
+
+:deep(.go-to-bottom) {
+    position: absolute;
+    z-index: 3;
+    right: 16px;
+    bottom: 16px;
+    border: 1px solid var(--play-border);
+    background: var(--play-bg);
+    box-shadow: 0 2px 8px rgb(0 0 0 / 12%);
+    color: var(--play-text);
+}
+
+:deep(.play-message) {
+    position: absolute;
+    z-index: 2;
+    top: 12px;
+    left: 12px;
+    margin: 0;
+    padding: 8px 10px;
+    border: 1px solid var(--play-border);
+    border-radius: 6px;
+    background: var(--play-bg);
+    color: var(--play-text);
+}
+
+@container (max-width: 760px) {
     .code-playground-grid {
+        position: relative;
         grid-template-columns: 1fr;
-        grid-template-rows: minmax(430px, 1fr) minmax(420px, 1fr);
+        grid-template-rows: 38px clamp(430px, 62vh, 560px);
         height: auto;
     }
 
     .code-playground-editor {
+        position: absolute;
+        z-index: 2;
+        top: 0;
+        right: 0;
+        left: 0;
+        height: 38px;
+        overflow: hidden;
         border-right: 0;
         border-bottom: 1px solid var(--vp-c-divider);
+        background: var(--vp-c-bg);
+        transition:
+            height 180ms ease,
+            box-shadow 180ms ease;
+    }
+
+    .is-code-drawer-open .code-playground-editor {
+        height: clamp(360px, 55vh, 500px);
+        box-shadow: 0 18px 36px rgb(33 27 62 / 18%);
+    }
+
+    .code-playground-preview {
+        grid-row: 2;
+    }
+
+    .drawer-toggle {
+        display: inline-flex;
+        padding: 3px 8px;
+        border: 1px solid var(--vp-c-divider);
+        background: var(--vp-c-bg);
+        color: var(--vp-c-text-2);
+        font-size: 0.68rem;
     }
 }
 
 @media (max-width: 560px) {
-    .code-playground-toolbar {
+    .code-playground-toolbar,
+    .code-playground-heading {
         align-items: flex-start;
         flex-direction: column;
     }
