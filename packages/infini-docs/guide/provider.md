@@ -11,24 +11,24 @@ a predicted relative offset into another cursor.
 
 ```ts
 interface Provider<TItem, TCursor, TId extends string | number> {
-  bootstrap(input: {
-    cursor: TCursor | null;
-    targetSize: number;
-    signal: AbortSignal;
-  }): Promise<Page<TItem>>;
+    bootstrap(input: {
+        cursor: TCursor | null;
+        targetSize: number;
+        signal: AbortSignal;
+    }): Promise<Page<TItem>>;
 
-  fetch(input: {
-    cursor: TCursor;
-    direction: "before" | "after";
-    targetSize: number;
-    signal: AbortSignal;
-  }): Promise<Page<TItem>>;
+    fetch(input: {
+        cursor: TCursor;
+        direction: "before" | "after";
+        targetSize: number;
+        signal: AbortSignal;
+    }): Promise<Page<TItem>>;
 
-  locateOffset?(input: {
-    anchor: TItem;
-    signedItemOffset: number;
-    signal: AbortSignal;
-  }): Promise<{ cursor: TCursor; targetId?: TId }>;
+    locateOffset?(input: {
+        anchor: TItem;
+        signedItemOffset: number;
+        signal: AbortSignal;
+    }): Promise<{ cursor: TCursor; targetId?: TId }>;
 }
 ```
 
@@ -109,46 +109,46 @@ returns canonical order:
 
 ```ts
 type ApiPage = {
-  messages: Message[];
-  hasBefore: boolean;
-  hasAfter: boolean;
+    messages: Message[];
+    hasBefore: boolean;
+    hasAfter: boolean;
 };
 
 async function requestPage(
-  params: URLSearchParams,
-  signal: AbortSignal,
+    params: URLSearchParams,
+    signal: AbortSignal,
 ): Promise<Page<Message>> {
-  const response = await fetch(`/api/messages?${params}`, { signal });
-  if (!response.ok) throw new Error(`Messages: ${response.status}`);
-  const page: ApiPage = await response.json();
+    const response = await fetch(`/api/messages?${params}`, { signal });
+    if (!response.ok) throw new Error(`Messages: ${response.status}`);
+    const page: ApiPage = await response.json();
 
-  return {
-    items: page.messages,
-    exhaustedBefore: !page.hasBefore,
-    exhaustedAfter: !page.hasAfter,
-  };
+    return {
+        items: page.messages,
+        exhaustedBefore: !page.hasBefore,
+        exhaustedAfter: !page.hasAfter,
+    };
 }
 
 const provider: Provider<Message, string, string> = {
-  bootstrap({ cursor, targetSize, signal }) {
-    return requestPage(
-      new URLSearchParams({
-        around: cursor ?? "",
-        pixels: String(targetSize),
-      }),
-      signal,
-    );
-  },
+    bootstrap({ cursor, targetSize, signal }) {
+        return requestPage(
+            new URLSearchParams({
+                around: cursor ?? "",
+                pixels: String(targetSize),
+            }),
+            signal,
+        );
+    },
 
-  fetch({ cursor, direction, targetSize, signal }) {
-    return requestPage(
-      new URLSearchParams({
-        [direction]: cursor,
-        pixels: String(targetSize),
-      }),
-      signal,
-    );
-  },
+    fetch({ cursor, direction, targetSize, signal }) {
+        return requestPage(
+            new URLSearchParams({
+                [direction]: cursor,
+                pixels: String(targetSize),
+            }),
+            signal,
+        );
+    },
 };
 ```
 
@@ -199,9 +199,9 @@ Push events are separate from Provider methods:
 
 ```ts
 controller.insertExternal({
-  anchor: event.anchorId,
-  side: event.side,
-  items: event.items,
+    anchor: event.anchorId,
+    side: event.side,
+    items: event.items,
 });
 
 controller.deleteExternal(event.ids);

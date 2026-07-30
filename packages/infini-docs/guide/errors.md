@@ -14,14 +14,16 @@ reported through `onError`.
 Keep already committed content mounted:
 
 ```tsx
-{snapshot.phase.status === "failed" && (
-  <div role="alert">
-    <span>{snapshot.phase.error.message}</span>
-    <button onClick={controller.retry}>Retry</button>
-  </div>
-)}
+{
+    snapshot.phase.status === "failed" && (
+        <div role="alert">
+            <span>{snapshot.phase.error.message}</span>
+            <button onClick={controller.retry}>Retry</button>
+        </div>
+    );
+}
 
-<InfiniList controller={controller} renderItem={renderItem} />
+<InfiniList controller={controller} renderItem={renderItem} />;
 ```
 
 `retry()` repeats the latched operation with its original target and alignment.

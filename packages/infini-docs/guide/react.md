@@ -35,15 +35,15 @@ React `key`.
 `debug` is the one config field synchronized after creation:
 
 ```tsx
-debug: import.meta.env.DEV ? "InboxFeed" : undefined
+debug: import.meta.env.DEV ? "InboxFeed" : undefined;
 ```
 
 ## `InfiniList`
 
 ```tsx
 <InfiniList
-  controller={controller}
-  renderItem={(item, id) => <MessageRow key={id} item={item} />}
+    controller={controller}
+    renderItem={(item, id) => <MessageRow key={id} item={item} />}
 />
 ```
 
@@ -56,17 +56,17 @@ but the portal identity stays stable, so row component state is preserved.
 
 ### Props
 
-| Prop | Meaning | Default |
-| --- | --- | --- |
-| `controller` | Long-lived controller returned by `useInfini` | required |
-| `renderItem(item, id)` | React content for a stable row shell | required |
-| `scrollHost` | Browser `window` or an overflow element | `window` |
-| `paddingStart`, `paddingEnd` | Fixed-overlay insets in CSS pixels | `0` |
-| `layoutBefore`, `layoutAfter` | Pixel overscan | one viewport per side |
-| `anchorRatio` | Compensation waterline in Visible, from `0` to `1` | `0` |
-| `className`, `style` | Surface presentation | none |
-| `rowClassName` | Class applied to every row shell | none |
-| `onHostChange` | Receives the mounted DOM host and later `null` | none |
+| Prop                          | Meaning                                            | Default               |
+| ----------------------------- | -------------------------------------------------- | --------------------- |
+| `controller`                  | Long-lived controller returned by `useInfini`      | required              |
+| `renderItem(item, id)`        | React content for a stable row shell               | required              |
+| `scrollHost`                  | Browser `window` or an overflow element            | `window`              |
+| `paddingStart`, `paddingEnd`  | Fixed-overlay insets in CSS pixels                 | `0`                   |
+| `layoutBefore`, `layoutAfter` | Pixel overscan                                     | one viewport per side |
+| `anchorRatio`                 | Compensation waterline in Visible, from `0` to `1` | `0`                   |
+| `className`, `style`          | Surface presentation                               | none                  |
+| `rowClassName`                | Class applied to every row shell                   | none                  |
+| `onHostChange`                | Receives the mounted DOM host and later `null`     | none                  |
 
 Do not override the surface `height` or `position` through `style`; those are
 owned by the adapter.
@@ -77,22 +77,22 @@ owned by the adapter.
 
 ```tsx
 function FeedStatus({ snapshot, controller }) {
-  switch (snapshot.phase.status) {
-    case "dormant":
-    case "bootstrapping":
-      return <Spinner />;
-    case "seeking":
-      return <SmallProgressLabel>Finding messages…</SmallProgressLabel>;
-    case "failed":
-      return (
-        <ErrorBanner
-          error={snapshot.phase.error}
-          onRetry={controller.retry}
-        />
-      );
-    case "ready":
-      return snapshot.phase.empty ? <EmptyState /> : null;
-  }
+    switch (snapshot.phase.status) {
+        case "dormant":
+        case "bootstrapping":
+            return <Spinner />;
+        case "seeking":
+            return <SmallProgressLabel>Finding messages…</SmallProgressLabel>;
+        case "failed":
+            return (
+                <ErrorBanner
+                    error={snapshot.phase.error}
+                    onRetry={controller.retry}
+                />
+            );
+        case "ready":
+            return snapshot.phase.empty ? <EmptyState /> : null;
+    }
 }
 ```
 
@@ -103,8 +103,12 @@ a full-page spinner.
 Edge loading is independent of foreground phase:
 
 ```tsx
-{snapshot.loadingBefore && <TopLoadingIndicator />}
-{snapshot.loadingAfter && <BottomLoadingIndicator />}
+{
+    snapshot.loadingBefore && <TopLoadingIndicator />;
+}
+{
+    snapshot.loadingAfter && <BottomLoadingIndicator />;
+}
 ```
 
 ## Scrolling to an item
@@ -121,10 +125,10 @@ import type { InfiniDomHost } from "@infini-scroll/dom-support";
 const hostRef = useRef<InfiniDomHost<Message, string, string> | null>(null);
 
 <InfiniList
-  controller={controller}
-  onHostChange={(host) => (hostRef.current = host)}
-  renderItem={(message) => <MessageRow message={message} />}
-/>
+    controller={controller}
+    onHostChange={(host) => (hostRef.current = host)}
+    renderItem={(message) => <MessageRow message={message} />}
+/>;
 ```
 
 For a nearby item:
@@ -138,7 +142,7 @@ fallback; the host remembers the requested final alignment:
 
 ```ts
 if (!hostRef.current?.scrollToItem(messageId, "center")) {
-  controller.jump(messageId, { alignment: "center" });
+    controller.jump(messageId, { alignment: "center" });
 }
 ```
 
@@ -189,9 +193,9 @@ known data. For frequent imperative changes, keep the host from
 
 ```ts
 host.setViewportOptions({
-  paddingStart: toolbarHeight,
-  layoutAfter: 1200,
-  anchorRatio: 0.25,
+    paddingStart: toolbarHeight,
+    layoutAfter: 1200,
+    anchorRatio: 0.25,
 });
 ```
 

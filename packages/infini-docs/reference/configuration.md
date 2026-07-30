@@ -13,7 +13,7 @@ created. Treat it as immutable for that controller's lifetime.
 ### `provider`
 
 ```ts
-provider: Provider<TItem, TCursor, TId>
+provider: Provider<TItem, TCursor, TId>;
 ```
 
 Ordered data source. See the [Provider contract](/guide/provider).
@@ -43,7 +43,7 @@ reads or asynchronous work.
 ### `defaultItemEstimate`
 
 ```ts
-defaultItemEstimate: number
+defaultItemEstimate: number;
 ```
 
 Positive fallback extent, also used for remote distance prediction. Prefer a
@@ -151,26 +151,26 @@ Receives background and foreground Provider failures. UI should still use
 
 ```ts
 const config = {
-  debug: import.meta.env.DEV ? "Conversation" : undefined,
-  provider,
-  ops: {
-    getId: (item) => item.id,
-    getCursor: (item) => item.cursor,
-  },
-  estimateSize: (item) => item.previewLines * 20 + 24,
-  defaultItemEstimate: 72,
-  initial: {
-    cursor: null,
-    target: route.messageId,
-    alignment: "center",
-  },
-  targetToCursor: (id) => id,
-  locateTarget: (items, id) =>
-    items.some((item) => item.id === id) ? id : null,
-  layoutBefore: 900,
-  layoutAfter: 1200,
-  residentBefore: 30,
-  residentAfter: 50,
-  onError: reportInfiniError,
+    debug: import.meta.env.DEV ? "Conversation" : undefined,
+    provider,
+    ops: {
+        getId: (item) => item.id,
+        getCursor: (item) => item.cursor,
+    },
+    estimateSize: (item) => item.previewLines * 20 + 24,
+    defaultItemEstimate: 72,
+    initial: {
+        cursor: null,
+        target: route.messageId,
+        alignment: "center",
+    },
+    targetToCursor: (id) => id,
+    locateTarget: (items, id) =>
+        items.some((item) => item.id === id) ? id : null,
+    layoutBefore: 900,
+    layoutAfter: 1200,
+    residentBefore: 30,
+    residentAfter: 50,
+    onError: reportInfiniError,
 } satisfies ControllerConfig<Message, string, string, string>;
 ```

@@ -11,13 +11,13 @@ users construct it directly.
 
 ## Lifecycle and observation
 
-| Method | Purpose |
-| --- | --- |
-| `start()` | Idempotently starts the initial bootstrap |
+| Method                | Purpose                                               |
+| --------------------- | ----------------------------------------------------- |
+| `start()`             | Idempotently starts the initial bootstrap             |
 | `subscribe(listener)` | Registers a change listener and returns `unsubscribe` |
-| `getSnapshot()` | Returns the current immutable Snapshot |
-| `setDebug(label)` | Updates the optional diagnostic label |
-| `dispose()` | Permanently releases work and state; idempotent |
+| `getSnapshot()`       | Returns the current immutable Snapshot                |
+| `setDebug(label)`     | Updates the optional diagnostic label                 |
+| `dispose()`           | Permanently releases work and state; idempotent       |
 
 Call `start()` after a physical host has attached. Do not call methods other
 than `dispose()` after disposal.
@@ -30,8 +30,8 @@ Starts a discontinuous bootstrap around an application target.
 
 ```ts
 controller.jump(target, {
-  direction: "after",
-  alignment: "center",
+    direction: "after",
+    alignment: "center",
 });
 ```
 
@@ -52,13 +52,13 @@ phase is not `failed`.
 
 ## External data changes
 
-| Method | Purpose |
-| --- | --- |
+| Method                                    | Purpose                                      |
+| ----------------------------------------- | -------------------------------------------- |
 | `insertExternal({ anchor, side, items })` | Insert ordered items next to a stable anchor |
-| `deleteExternal(ids)` | Delete known IDs and prevent late revival |
-| `updateExternal(items)` | Replace item objects without reordering |
-| `reopen(direction)` | Mark a previously exhausted side open |
-| `trimBuffer(direction, maxItems)` | Evict excess non-Resident edge items |
+| `deleteExternal(ids)`                     | Delete known IDs and prevent late revival    |
+| `updateExternal(items)`                   | Replace item objects without reordering      |
+| `reopen(direction)`                       | Mark a previously exhausted side open        |
+| `trimBuffer(direction, maxItems)`         | Evict excess non-Resident edge items         |
 
 See [Navigation & live updates](/guide/navigation-and-updates) for examples.
 
@@ -67,17 +67,17 @@ See [Navigation & live updates](/guide/navigation-and-updates) for examples.
 Applications using `InfiniList` or `InfiniDomHost` should not call these
 directly.
 
-| Method | Adapter responsibility |
-| --- | --- |
-| `setView(input)` | Report surface-local scroll, viewport, insets, and overscan |
-| `setCandidatePreparer(fn)` | Install hidden candidate measurement |
-| `commitCandidate(effectId, measurements)` | Atomically activate a measured candidate |
-| `measure(measurements)` | Submit finite positive row extents |
-| `commitLayout(revision, handles)` | Acknowledge the exact mounted set |
-| `captureAnchor(ratio)` | Capture a semantic anchor before geometry changes |
-| `takeScrollCorrection()` | Consume the pending absolute local-scroll target |
-| `acknowledgeScrollCorrection(input)` | Report observed geometry after applying correction |
-| `pin(id, pinned)` | Retain a focus-bearing row |
+| Method                                    | Adapter responsibility                                      |
+| ----------------------------------------- | ----------------------------------------------------------- |
+| `setView(input)`                          | Report surface-local scroll, viewport, insets, and overscan |
+| `setCandidatePreparer(fn)`                | Install hidden candidate measurement                        |
+| `commitCandidate(effectId, measurements)` | Atomically activate a measured candidate                    |
+| `measure(measurements)`                   | Submit finite positive row extents                          |
+| `commitLayout(revision, handles)`         | Acknowledge the exact mounted set                           |
+| `captureAnchor(ratio)`                    | Capture a semantic anchor before geometry changes           |
+| `takeScrollCorrection()`                  | Consume the pending absolute local-scroll target            |
+| `acknowledgeScrollCorrection(input)`      | Report observed geometry after applying correction          |
+| `pin(id, pinned)`                         | Retain a focus-bearing row                                  |
 
 ### Layout transaction rule
 

@@ -31,10 +31,7 @@ pnpm add @infini-scroll/core @infini-scroll/dom-support
 ```
 
 ```ts
-import {
-  InfiniController,
-  initializeInfini,
-} from "@infini-scroll/core";
+import { InfiniController, initializeInfini } from "@infini-scroll/core";
 import { InfiniDomHost } from "@infini-scroll/dom-support";
 
 await initializeInfini();
@@ -44,27 +41,23 @@ await initializeInfini();
 
 ```ts
 type LogEntry = {
-  id: string;
-  cursor: string;
-  level: "info" | "warn" | "error";
-  message: string;
+    id: string;
+    cursor: string;
+    level: "info" | "warn" | "error";
+    message: string;
 };
 
-const controller = new InfiniController<
-  LogEntry,
-  string,
-  string
->({
-  provider: logProvider,
-  ops: {
-    getId: (entry) => entry.id,
-    getCursor: (entry) => entry.cursor,
-  },
-  estimateSize: (entry) => entry.message.length > 160 ? 88 : 48,
-  defaultItemEstimate: 52,
-  initial: { cursor: null },
-  residentBefore: 50,
-  residentAfter: 100,
+const controller = new InfiniController<LogEntry, string, string>({
+    provider: logProvider,
+    ops: {
+        getId: (entry) => entry.id,
+        getCursor: (entry) => entry.cursor,
+    },
+    estimateSize: (entry) => (entry.message.length > 160 ? 88 : 48),
+    defaultItemEstimate: 52,
+    initial: { cursor: null },
+    residentBefore: 50,
+    residentAfter: 100,
 });
 ```
 
@@ -77,20 +70,20 @@ Your document needs a surface inside either the window or an overflow element:
 
 ```html
 <div id="viewport">
-  <div id="log-surface"></div>
+    <div id="log-surface"></div>
 </div>
 ```
 
 ```css
 #viewport {
-  height: 70vh;
-  overflow: auto;
+    height: 70vh;
+    overflow: auto;
 }
 
 .log-row {
-  width: 100%;
-  padding: 8px 12px;
-  box-sizing: border-box;
+    width: 100%;
+    padding: 8px 12px;
+    box-sizing: border-box;
 }
 ```
 
@@ -101,26 +94,26 @@ const viewport = document.querySelector<HTMLElement>("#viewport")!;
 const surface = document.querySelector<HTMLElement>("#log-surface")!;
 
 const host = new InfiniDomHost({
-  controller,
-  container: surface,
-  scrollHost: viewport,
+    controller,
+    container: surface,
+    scrollHost: viewport,
 
-  createRow(entry, id) {
-    const row = document.createElement("article");
-    row.className = `log-row log-row--${entry.level}`;
-    row.dataset.id = id;
-    row.textContent = entry.message;
-    return row;
-  },
+    createRow(entry, id) {
+        const row = document.createElement("article");
+        row.className = `log-row log-row--${entry.level}`;
+        row.dataset.id = id;
+        row.textContent = entry.message;
+        return row;
+    },
 
-  updateRow(row, entry) {
-    row.className = `log-row log-row--${entry.level}`;
-    row.textContent = entry.message;
-  },
+    updateRow(row, entry) {
+        row.className = `log-row log-row--${entry.level}`;
+        row.textContent = entry.message;
+    },
 
-  disposeRow(row) {
-    // Unmount framework roots, detach subscriptions, or release resources.
-  },
+    disposeRow(row) {
+        // Unmount framework roots, detach subscriptions, or release resources.
+    },
 });
 
 controller.start();
@@ -138,26 +131,26 @@ Mount one independent framework root per stable row shell:
 const roots = new WeakMap<HTMLElement, FrameworkRoot>();
 
 const host = new InfiniDomHost({
-  controller,
-  container: surface,
-  scrollHost: viewport,
+    controller,
+    container: surface,
+    scrollHost: viewport,
 
-  createRow(item) {
-    const node = document.createElement("div");
-    const root = framework.createRoot(node);
-    roots.set(node, root);
-    root.render(ItemView, { item });
-    return node;
-  },
+    createRow(item) {
+        const node = document.createElement("div");
+        const root = framework.createRoot(node);
+        roots.set(node, root);
+        root.render(ItemView, { item });
+        return node;
+    },
 
-  updateRow(node, item) {
-    roots.get(node)?.render(ItemView, { item });
-  },
+    updateRow(node, item) {
+        roots.get(node)?.render(ItemView, { item });
+    },
 
-  disposeRow(node) {
-    roots.get(node)?.unmount();
-    roots.delete(node);
-  },
+    disposeRow(node) {
+        roots.get(node)?.unmount();
+        roots.delete(node);
+    },
 });
 ```
 
@@ -172,13 +165,13 @@ The controller follows the external-store pattern:
 let previousRevision = -1;
 
 const unsubscribe = controller.subscribe(() => {
-  const snapshot = controller.getSnapshot();
-  if (snapshot.revision === previousRevision) return;
-  previousRevision = snapshot.revision;
+    const snapshot = controller.getSnapshot();
+    if (snapshot.revision === previousRevision) return;
+    previousRevision = snapshot.revision;
 
-  status.textContent = snapshot.phase.status;
-  beforeSpinner.hidden = !snapshot.loadingBefore;
-  afterSpinner.hidden = !snapshot.loadingAfter;
+    status.textContent = snapshot.phase.status;
+    beforeSpinner.hidden = !snapshot.loadingBefore;
+    afterSpinner.hidden = !snapshot.loadingAfter;
 });
 ```
 
@@ -195,7 +188,7 @@ needed:
 
 ```ts
 if (!host.scrollToItem(targetId, "center")) {
-  controller.jump(targetId, { alignment: "center" });
+    controller.jump(targetId, { alignment: "center" });
 }
 ```
 

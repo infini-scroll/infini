@@ -16,21 +16,16 @@ result, or compound route object.
 ```ts
 type Target = { messageId: string };
 
-const controller = new InfiniController<
-  Message,
-  string,
-  string,
-  Target
->({
-  // shared Provider, ops, and size configuration…
-  initial: {
-    cursor: null,
-    target: routeTarget,
-    alignment: "center",
-  },
-  targetToCursor: (target) => target.messageId,
-  locateTarget: (items, target) =>
-    items.find((item) => item.id === target.messageId)?.id ?? null,
+const controller = new InfiniController<Message, string, string, Target>({
+    // shared Provider, ops, and size configuration…
+    initial: {
+        cursor: null,
+        target: routeTarget,
+        alignment: "center",
+    },
+    targetToCursor: (target) => target.messageId,
+    locateTarget: (items, target) =>
+        items.find((item) => item.id === target.messageId)?.id ?? null,
 });
 ```
 
@@ -43,8 +38,8 @@ exact item alignment.
 
 ```ts
 controller.jump(
-  { messageId: result.id },
-  { direction: "after", alignment: "center" },
+    { messageId: result.id },
+    { direction: "after", alignment: "center" },
 );
 ```
 
@@ -57,11 +52,11 @@ need to store it.
 
 ## Alignment
 
-| Value | Result |
-| --- | --- |
-| `"start"` | Target at the unobscured viewport start |
-| `"center"` | Target centered in the unobscured viewport |
-| `"end"` | Target at the unobscured viewport end |
+| Value       | Result                                          |
+| ----------- | ----------------------------------------------- |
+| `"start"`   | Target at the unobscured viewport start         |
+| `"center"`  | Target centered in the unobscured viewport      |
+| `"end"`     | Target at the unobscured viewport end           |
 | `"nearest"` | Smallest movement that fully reveals the target |
 
 Fixed-overlay insets are respected.
@@ -73,7 +68,7 @@ Persist a stable item ID:
 ```ts
 const visible = controller.getVisibleItem(0.25);
 if (visible) {
-  localStorage.setItem("reading-item", String(visible.id));
+    localStorage.setItem("reading-item", String(visible.id));
 }
 ```
 
@@ -87,9 +82,9 @@ Apply a contiguous ordered insertion next to a known anchor:
 
 ```ts
 controller.insertExternal({
-  anchor: "message-42",
-  side: "after",
-  items: [newMessageA, newMessageB],
+    anchor: "message-42",
+    side: "after",
+    items: [newMessageA, newMessageB],
 });
 ```
 
@@ -122,9 +117,9 @@ If a side was proven exhausted and later receives new content:
 
 ```ts
 controller.insertExternal({
-  anchor: previousLastId,
-  side: "after",
-  items: [newLastMessage],
+    anchor: previousLastId,
+    side: "after",
+    items: [newLastMessage],
 });
 controller.reopen("after");
 ```
