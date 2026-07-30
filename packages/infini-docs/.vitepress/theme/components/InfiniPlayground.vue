@@ -64,7 +64,7 @@ type PlaygroundContext = {
 };
 `;
 
-defineProps<{ inline?: boolean }>();
+defineProps<{ inline?: boolean; borderless?: boolean }>();
 
 interface PlaygroundModule {
     mount?: (context: {
@@ -385,6 +385,7 @@ onBeforeUnmount(() => {
         class="code-playground"
         :class="{
             'is-inline': inline,
+            'is-borderless': borderless,
             'is-code-drawer-open': codeDrawerOpen,
         }"
         aria-label="Editable Infini playground"
@@ -454,14 +455,6 @@ onBeforeUnmount(() => {
     </section>
 </template>
 
-<style>
-.VPDoc .content {
-    margin: 0;
-    padding: 0;
-    max-width: none !important;
-}
-</style>
-
 <style scoped>
 .code-playground {
     --play-bg: #fff;
@@ -476,6 +469,18 @@ onBeforeUnmount(() => {
     border-radius: 16px;
     background: var(--vp-c-bg);
     box-shadow: 0 18px 48px rgb(33 27 62 / 8%);
+}
+
+.code-playground.is-borderless {
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr);
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+    margin: 0;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
 }
 
 :global(.dark) .code-playground {
@@ -559,6 +564,11 @@ onBeforeUnmount(() => {
     grid-template-columns: minmax(0, 1.12fr) minmax(300px, 0.88fr);
     height: min(72vh, 680px);
     min-height: 500px;
+}
+
+.is-borderless .code-playground-grid {
+    height: 100%;
+    min-height: 0;
 }
 
 .code-playground-editor,
@@ -743,6 +753,11 @@ onBeforeUnmount(() => {
         grid-template-columns: 1fr;
         grid-template-rows: 38px clamp(430px, 62vh, 560px);
         height: auto;
+    }
+
+    .is-borderless .code-playground-grid {
+        grid-template-rows: 38px minmax(0, 1fr);
+        height: 100%;
     }
 
     .code-playground-editor {

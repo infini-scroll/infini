@@ -447,7 +447,6 @@ export async function mount({
 const PG_REACT = `import * as React from "react";
 import { createRoot } from "react-dom/client";
 import { initializeInfini, type Provider } from "@infini-scroll/core";
-import type { InfiniDomHost } from "@infini-scroll/dom-support";
 import { InfiniList, useInfini } from "@infini-scroll/react";
 
 ${PG_PROLOGUE}

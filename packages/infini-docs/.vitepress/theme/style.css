@@ -48,22 +48,6 @@
     line-height: 1.5;
 }
 
-.contract-card {
-    margin: 20px 0;
-    padding: 18px 20px;
-    border-left: 3px solid var(--vp-c-brand-1);
-    border-radius: 4px 12px 12px 4px;
-    background: var(--vp-c-bg-soft);
-}
-
-.contract-card p:first-child {
-    margin-top: 0;
-}
-
-.contract-card p:last-child {
-    margin-bottom: 0;
-}
-
 @media (max-width: 640px) {
     .concept-figure {
         margin-inline: -8px;
