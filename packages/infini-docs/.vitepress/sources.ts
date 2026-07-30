@@ -206,14 +206,9 @@ const REACT = `function MessageFeed({
     residentAfter: 30,
   });
 
-  const hostRef = React.useRef<
-    InfiniDomHost<Message, string, string, string> | null
-  >(null);
   const scrollToMessage = React.useCallback(
     (id: string, alignment: "center" | "end") => {
-      if (!hostRef.current?.scrollToItem(id, alignment)) {
-        controller.jump(id, { alignment });
-      }
+      controller.jump(id, { alignment });
     },
     [controller],
   );
@@ -252,9 +247,6 @@ const REACT = `function MessageFeed({
       <InfiniList
         controller={controller}
         scrollHost={scrollHost}
-        onHostChange={(host) => {
-          hostRef.current = host;
-        }}
         rowClassName="message-shell"
         renderItem={(message) => (
           <MessageRow
