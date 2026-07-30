@@ -5,3 +5,6 @@
 packages/*/dist/
 packages/infini-core/src/runtime/wasm/
 target/
+packages/infini-docs/.vitepress/cache/
+packages/infini-docs/.vitepress/dist/
+packages/infini-docs/.vitepress/.temp/

@@ -9,16 +9,19 @@
     "scripts": {
         "build": "pnpm run build:wasm && pnpm run build:packages",
         "build:wasm": "node scripts/build-wasm.mjs",
-        "build:packages": "pnpm --recursive --filter='!@infini-scroll/demo' run build",
-        "demo": "pnpm run build:wasm && pnpm --filter @infini-scroll/demo dev",
+        "build:packages": "pnpm run select:lib run build",
+        "demo": "pnpm run build:wasm && pnpm run select:demo dev",
         "docs": "node scripts/build-docs.mjs",
         "test": "pnpm run typecheck && pnpm run test:rust && pnpm run test:unit && pnpm run test:browser",
         "test:browser": "pnpm run build:wasm && playwright test",
         "test:browser:serve": "vite --config tests/browser/vite/vite.config.ts",
         "test:rust": "cargo test --workspace",
         "test:unit": "node --import tsx --test packages/infini-core/test/controller.test.ts packages/infini-dom-support/test/coordinates.test.ts",
-        "typecheck": "pnpm --recursive --filter='!@infini-scroll/demo' run typecheck",
-        "format": "cargo fmt && prettier --write ."
+        "typecheck": "pnpm run select:lib run typecheck",
+        "format": "cargo fmt && prettier --write .",
+        "select:lib": "pnpm --filter='@infini-scroll/core' --filter='@infini-scroll/dom-support' --filter='@infini-scroll/react'",
+        "select:docs": "pnpm --filter='@infini-scroll/docs'",
+        "select:demo": "pnpm --filter='@infini-scroll/demo'"
     },
     "devDependencies": {
         "@playwright/test": "1.61.1",

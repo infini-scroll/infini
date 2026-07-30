@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 920 380" role="img" aria-labelledby="title desc">
+  <title id="title">How islands change during a distant jump</title>
+  <desc id="desc">A current continuous island is surrounded by unknown content. A distant jump creates a new island while the old one can be retained as stale until overlap proves they connect.</desc>
+  <defs>
+    <style>
+      .label{font:600 16px ui-sans-serif,system-ui,sans-serif;fill:#29263b}
+      .small{font:13px ui-sans-serif,system-ui,sans-serif;fill:#68637c}
+      .step{font:700 12px ui-sans-serif,system-ui,sans-serif;letter-spacing:.08em;fill:#6955d9}
+    </style>
+    <pattern id="unknown" width="12" height="12" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+      <rect width="12" height="12" fill="#f1eff6"/>
+      <rect width="4" height="12" fill="#e0ddea"/>
+    </pattern>
+  </defs>
+  <rect width="920" height="380" rx="24" fill="#faf9fd"/>
+  <text x="52" y="48" class="step">1 · CONTINUOUS SCROLL</text>
+  <rect x="52" y="68" width="816" height="62" rx="12" fill="url(#unknown)" stroke="#d9d4e8"/>
+  <rect x="276" y="78" width="368" height="42" rx="9" fill="#6955d9"/>
+  <text x="460" y="104" text-anchor="middle" font-family="ui-sans-serif,system-ui,sans-serif" font-size="15" font-weight="700" fill="white">Main island · exact local geometry</text>
+  <text x="164" y="151" text-anchor="middle" class="small">unknown content</text>
+  <text x="756" y="151" text-anchor="middle" class="small">unknown content</text>
+
+  <path d="M460 168v34" stroke="#8b85a0" stroke-width="2" marker-end="url(#arrow)"/>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M0 0l10 5-10 5z" fill="#8b85a0"/>
+    </marker>
+  </defs>
+
+  <text x="52" y="226" class="step">2 · DISTANT JUMP</text>
+  <rect x="52" y="246" width="816" height="62" rx="12" fill="url(#unknown)" stroke="#d9d4e8"/>
+  <rect x="120" y="256" width="250" height="42" rx="9" fill="#b8b2ca"/>
+  <text x="245" y="282" text-anchor="middle" font-family="ui-sans-serif,system-ui,sans-serif" font-size="14" font-weight="600" fill="#302c40">Retained stale island</text>
+  <rect x="598" y="256" width="206" height="42" rx="9" fill="#36a38d"/>
+  <text x="701" y="282" text-anchor="middle" font-family="ui-sans-serif,system-ui,sans-serif" font-size="14" font-weight="700" fill="white">New main island</text>
+  <text x="484" y="333" text-anchor="middle" class="small">Still unknown — never guessed from cursor distance or average row height</text>
+  <text x="460" y="358" text-anchor="middle" class="small">Shared stable IDs can later prove overlap and allow safe reuse.</text>
+</svg>
