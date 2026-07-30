@@ -1,7 +1,18 @@
 import { fileURLToPath, URL } from "node:url";
 import { defineConfig } from "vitepress";
 
+const repository = process.env.GITHUB_REPOSITORY?.split("/")[1];
+const isUserOrOrgPagesRepo =
+    repository !== undefined && /\.github\.io$/i.test(repository);
+const base =
+    process.env.GITHUB_ACTIONS === "true" &&
+    repository !== undefined &&
+    !isUserOrOrgPagesRepo
+        ? `/${repository}/`
+        : "/";
+
 export default defineConfig({
+    base,
     title: "Infini",
     description: "The Engine for Your Long Content.",
     cleanUrls: true,
@@ -76,9 +87,5 @@ export default defineConfig({
         ],
         search: { provider: "local" },
         outline: { level: [2, 3] },
-        footer: {
-            message: "Released under the Apache-2.0 License.",
-            copyright: "Infini",
-        },
     },
 });

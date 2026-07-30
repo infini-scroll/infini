@@ -207,8 +207,8 @@ DOM measurement, so the destination becomes locally exact.
 ## Next steps
 
 - Read [Provider contract](/guide/provider) before connecting production data.
-- Use the [React wrapper guide](/guide/react) for lifecycle, alignment, and
+- Use the [React wrapper guide](/reference/react) for lifecycle, alignment, and
   reading-position patterns.
-- Use the [Headless interface](/guide/headless) with Vue, Svelte, Solid, or
+- Use the [Headless interface](/reference/headless) with Vue, Svelte, Solid, or
   custom DOM rendering.
 - Modify and run a complete example in the [Playground](/playground).
