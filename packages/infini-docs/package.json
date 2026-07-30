@@ -1,0 +1,14 @@
+{
+    "name": "@infini-scroll/docs",
+    "private": true,
+    "type": "module",
+    "devDependencies": {
+        "typescript": "6.0.3",
+        "vitepress": "2.0.0-alpha.18"
+    },
+    "scripts": {
+        "dev": "vitepress dev",
+        "build": "vitepress build",
+        "preview": "vitepress preview"
+    }
+}
