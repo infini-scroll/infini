@@ -14,7 +14,7 @@ import { InfiniDomHost, type ScrollHost } from "@infini-scroll/dom-support";
 interface PortalSlot<TItem, TId extends ItemId> {
     id: TId;
     item: TItem;
-    node: HTMLDivElement;
+    node: HTMLElement;
     portalKey: number;
     handle: number;
 }
@@ -22,7 +22,7 @@ interface PortalSlot<TItem, TId extends ItemId> {
 class PortalStore<TItem, TId extends ItemId> {
     private readonly slots = new Map<number, PortalSlot<TItem, TId>>();
     private readonly handles = new Map<number, Set<number>>();
-    private readonly nodes = new WeakMap<HTMLDivElement, number>();
+    private readonly nodes = new WeakMap<HTMLElement, number>();
     private readonly listeners = new Set<() => void>();
     private version = 0;
     private nextPortalKey = 1;
@@ -63,7 +63,7 @@ class PortalStore<TItem, TId extends ItemId> {
         this.emit();
     }
 
-    deleteNode(node: HTMLDivElement): void {
+    deleteNode(node: HTMLElement): void {
         const portalKey = this.nodes.get(node);
         if (portalKey == null) return;
         const slot = this.slots.get(portalKey);
