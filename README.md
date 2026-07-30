@@ -1,51 +1,24 @@
 # Infini
 
-## Usage
+_The Engine for Your Long Content._
 
-```sh
-pnpm add @infini-scroll/core @infini-scroll/react
-```
+Fast, coherent navigating through massive information — by controlling what stays in the viewport, and what stays in memory. Infini is a bidirectional infinite list engine for building fast, stable feeds with variable-height items.
 
-```tsx
-import { initializeInfini } from "@infini-scroll/core";
-import { InfiniList, useInfini } from "@infini-scroll/react";
+Highlights:
 
-await initializeInfini();
-const { controller, snapshot } = useInfini({
-    provider: {
-        bootstrap: ({ cursor, targetSize, signal }) =>
-            api.bootstrap({ cursor, targetSize, signal }),
-        fetch: ({ cursor, direction, targetSize, signal }) =>
-            api.fetch({ cursor, direction, targetSize, signal }),
-        locateOffset: ({ anchor, signedItemOffset, signal }) =>
-            api.locateOffset({ anchor, signedItemOffset, signal }),
-    },
-    ops: {
-        getId: (message) => message.id,
-        getCursor: (message) => message.cursor,
-    },
-    estimateSize: () => 72,
-    defaultItemEstimate: 72,
-    initial: { cursor: null },
-    layoutBefore: 800,
-    layoutAfter: 800,
-    residentBefore: 40,
-    residentAfter: 40,
-});
+- Bidirectional loading for chat logs, timelines, and history-heavy feeds
+- Variable-height item support without giving up scroll stability
+- Headless core with React bindings for flexible integration
 
-return (
-    <InfiniList
-        controller={controller}
-        renderItem={(message) => <Message message={message} />}
-    />
-);
-```
+To get started, check out our [online documentation](https://infini.flysoftbeta.top):
 
-## Build
+- [Online demo](https://infini.flysoftbeta.top/playground)
+- [Introduction](https://infini.flysoftbeta.top/guide/introduction)
+- [Quick start](https://infini.flysoftbeta.top/guide/quick-start)
+- [Reference](https://infini.flysoftbeta.top/reference/)
 
-```sh
-rustup target add wasm32-unknown-unknown
-cargo install wasm-pack --locked
-pnpm install
-pnpm build
-```
+Contributions are welcome.
+
+## License
+
+Apache 2.0

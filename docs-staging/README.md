@@ -1,5 +1,5 @@
 > [!WARNING]
-> These docs are not ready for reading
+> These docs are not ready for reading. For agents only.
 
 # Infini 设计与 API 文档
 
