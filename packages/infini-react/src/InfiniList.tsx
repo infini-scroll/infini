@@ -12,16 +12,20 @@ import type { InfiniController, ItemId } from "@infini-scroll/core";
 import { InfiniDomHost, type ScrollHost } from "@infini-scroll/dom-support";
 
 interface PortalSlot<TItem, TId extends ItemId> {
-    handle: number;
     id: TId;
     item: TItem;
     node: HTMLDivElement;
+    portalKey: number;
+    handle: number;
 }
 
 class PortalStore<TItem, TId extends ItemId> {
     private readonly slots = new Map<number, PortalSlot<TItem, TId>>();
+    private readonly handles = new Map<number, Set<number>>();
+    private readonly nodes = new WeakMap<HTMLDivElement, number>();
     private readonly listeners = new Set<() => void>();
     private version = 0;
+    private nextPortalKey = 1;
 
     subscribe = (listener: () => void): (() => void) => {
         this.listeners.add(listener);
@@ -35,20 +39,42 @@ class PortalStore<TItem, TId extends ItemId> {
     }
 
     set(slot: PortalSlot<TItem, TId>): void {
-        this.slots.set(slot.handle, slot);
+        slot.portalKey = this.nextPortalKey++;
+        this.slots.set(slot.portalKey, slot);
+        this.nodes.set(slot.node, slot.portalKey);
+        let portalKeys = this.handles.get(slot.handle);
+        if (!portalKeys) {
+            portalKeys = new Set();
+            this.handles.set(slot.handle, portalKeys);
+        }
+        portalKeys.add(slot.portalKey);
         this.emit();
     }
 
     update(handle: number, item: TItem, id: TId): void {
-        const slot = this.slots.get(handle);
-        if (!slot) return;
-        slot.item = item;
-        slot.id = id;
+        const portalKeys = this.handles.get(handle);
+        if (!portalKeys?.size) return;
+        for (const portalKey of portalKeys) {
+            const slot = this.slots.get(portalKey);
+            if (!slot) continue;
+            slot.item = item;
+            slot.id = id;
+        }
         this.emit();
     }
 
-    delete(handle: number): void {
-        if (this.slots.delete(handle)) this.emit();
+    deleteNode(node: HTMLDivElement): void {
+        const portalKey = this.nodes.get(node);
+        if (portalKey == null) return;
+        const slot = this.slots.get(portalKey);
+        if (!slot) return;
+        const portalKeys = this.handles.get(slot.handle);
+        if (portalKeys) {
+            portalKeys.delete(portalKey);
+            if (!portalKeys.size) this.handles.delete(slot.handle);
+        }
+        this.slots.delete(portalKey);
+        this.emit();
     }
 
     private emit(): void {
@@ -115,6 +141,9 @@ export function InfiniList<
     onHostChange,
 }: InfiniListProps<TItem, TCursor, TId, TTarget>) {
     const containerRef = useRef<HTMLDivElement | null>(null);
+    const hostRef = useRef<InfiniDomHost<TItem, TCursor, TId, TTarget> | null>(
+        null,
+    );
     const store = useMemo(() => new PortalStore<TItem, TId>(), []);
     useSyncExternalStore(store.subscribe, store.getSnapshot, store.getSnapshot);
 
@@ -137,7 +166,7 @@ export function InfiniList<
                 const node = container.ownerDocument.createElement("div");
                 node.dataset.infiniHandle = String(handle);
                 if (rowClassName) node.className = rowClassName;
-                store.set({ handle, id, item, node });
+                store.set({ handle, id, item, node, portalKey: 0 });
                 return node;
             },
             updateRow(_node, item, id) {
@@ -145,13 +174,12 @@ export function InfiniList<
                 if (handle != null) store.update(handle, item, id);
             },
             disposeRow(node) {
-                const handle = Number(node.dataset.infiniHandle);
-                if (Number.isFinite(handle)) store.delete(handle);
+                store.deleteNode(node);
             },
         });
-        onHostChange?.(host);
+        hostRef.current = host;
         return () => {
-            onHostChange?.(null);
+            hostRef.current = null;
             host.dispose();
         };
     }, [
@@ -161,11 +189,17 @@ export function InfiniList<
         paddingStart,
         layoutAfter,
         layoutBefore,
-        onHostChange,
         rowClassName,
         scrollHost,
         store,
     ]);
+
+    useLayoutEffect(() => {
+        onHostChange?.(hostRef.current);
+        return () => {
+            onHostChange?.(null);
+        };
+    }, [onHostChange]);
 
     return (
         <div
@@ -179,7 +213,7 @@ export function InfiniList<
                     createPortal(
                         renderItem(slot.item, slot.id),
                         slot.node,
-                        slot.handle,
+                        slot.portalKey,
                     ),
                 )}
         </div>
