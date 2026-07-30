@@ -27,16 +27,9 @@ The hook:
 - disposes the controller on permanent unmount;
 - tolerates React Strict Mode's immediate effect replay.
 
-The initial config is treated as immutable. Recreating the object during render
-does not reconfigure or replace the controller. If the account, Provider,
-dataset, or stable-ID domain changes, remount the component with a different
-React `key`.
-
-`debug` is the one config field synchronized after creation:
-
-```tsx
-debug: import.meta.env.DEV ? "InboxFeed" : undefined;
-```
+The initial config is treated as immutable. **Recreating the object during render
+will not reconfigure or replace the controller.** If the account, Provider,
+dataset, or stable-ID domain changes (for example, sorting option is reversed), remount the component with a different React `key`.
 
 ## `InfiniList`
 

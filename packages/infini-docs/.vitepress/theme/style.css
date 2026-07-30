@@ -1,7 +1,7 @@
 :root {
-    --vp-c-brand-1: #5a42c5;
-    --vp-c-brand-2: #5a42c5;
-    --vp-c-brand-3: #5a42c5;
+    --vp-c-brand-1: #4265c5;
+    --vp-c-brand-2: #4265c5;
+    --vp-c-brand-3: #4265c5;
     --vp-c-brand-soft: rgb(105 85 217 / 14%);
     --vp-home-hero-name-color: transparent;
     --vp-home-hero-name-background: linear-gradient(
@@ -62,11 +62,6 @@
 
 .contract-card p:last-child {
     margin-bottom: 0;
-}
-
-.vp-doc table {
-    display: table;
-    width: 100%;
 }
 
 @media (max-width: 640px) {

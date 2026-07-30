@@ -8,7 +8,7 @@ description: Jump to distant content, restore position, and apply external chang
 Infini separates physical scrolling from data navigation. Nearby rows can be
 aligned immediately; distant targets first need a Provider bootstrap.
 
-## Configure application targets
+## Configure targets
 
 `TTarget` is an application-level value such as a message ID, timestamp, search
 result, or compound route object.
@@ -17,7 +17,7 @@ result, or compound route object.
 type Target = { messageId: string };
 
 const controller = new InfiniController<Message, string, string, Target>({
-    // shared Provider, ops, and size configuration…
+    // Shared Provider, ops, and size configuration
     initial: {
         cursor: null,
         target: routeTarget,

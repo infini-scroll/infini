@@ -14,21 +14,29 @@ unread message and loads older or newer messages as needed.
 
 ## Install
 
-```sh
-npm add @infini-scroll/core @infini-scroll/react --save
-# or pnpm
-pnpm add @infini-scroll/core @infini-scroll/react --save
-# or yarn
-yarn add @infini-scroll/core @infini-scroll/react --save
+::: code-group
+
+```sh [npm]
+npm install --save @infini-scroll/core @infini-scroll/react
 ```
+
+```sh [pnpm]
+pnpm add --save @infini-scroll/core @infini-scroll/react
+```
+
+```sh [yarn]
+yarn add --save @infini-scroll/core @infini-scroll/react
+```
+
+:::
 
 Infini depends on WebAssembly. Initialize it once before rendering a controller. Your bundler should be able to handle it:
 
 <div v-html="highlightedCodeBlocks.quickStartInitialize"></div>
 
-## Define the provider
+## Walkthrough
 
-## Item
+### Item
 
 Each item needs an unique, immutable ID.
 It is how Infini recognizes the same logical record across overlapping requests.
@@ -37,7 +45,7 @@ Items **CAN NOT** be reordered. Use a new ID for that purpose.
 
 <div v-html="highlightedCodeBlocks.quickStartMessage"></div>
 
-## Backend
+### Backend
 
 For this example, we would use a simple in-memory backend.
 
@@ -45,7 +53,7 @@ Messages are ordered by timestamp, and that timestamp is also a stable cursor. T
 
 <div v-html="highlightedCodeBlocks.quickStartBackend"></div>
 
-## Provider
+### Provider
 
 The Provider has two required operations:
 
@@ -81,16 +89,13 @@ same exact-target path to jump to the final message.
 
 ## Try it
 
-This is the same message feed and Provider from the Quick start. Edit it here,
-or switch between the React wrapper and the equivalent Raw DOM integration.
-
 <ClientOnly>
   <InfiniPlayground inline />
 </ClientOnly>
 
-## What happens while the user scrolls
+## Behind the scene
 
-The first Provider result forms a continuous known region called the **Main
+The first Provider result forms a continuous known region —— the **Main
 Island**. Infini measures its rows and mounts only the pixel range needed around
 the viewport.
 

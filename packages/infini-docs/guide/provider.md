@@ -1,22 +1,24 @@
 ---
-title: Provider contract
+title: Write your provider
 description: The data-source interface required by Infini.
 ---
 
-# Provider contract
+# Write your provider
 
-The Provider is the only required bridge to your data source. It establishes a
-contiguous page near a cursor, extends a known edge, and optionally translates
+The Provider is the bridge to your data source. It establishes a
+contiguous Page near a Cursor, extends a known edge, and optionally translates
 a predicted relative offset into another cursor.
 
 ```ts
 interface Provider<TItem, TCursor, TId extends string | number> {
+    // Fetch in both direction
     bootstrap(input: {
         cursor: TCursor | null;
         targetSize: number;
         signal: AbortSignal;
     }): Promise<Page<TItem>>;
 
+    // Fetch in one direction
     fetch(input: {
         cursor: TCursor;
         direction: "before" | "after";
@@ -24,6 +26,8 @@ interface Provider<TItem, TCursor, TId extends string | number> {
         signal: AbortSignal;
     }): Promise<Page<TItem>>;
 
+    // Only required if you want to use the Predictive Seek & controller.jump feature.
+    // Computes newItem = anchorItem + signedItemOffset
     locateOffset?(input: {
         anchor: TItem;
         signedItemOffset: number;
@@ -32,125 +36,45 @@ interface Provider<TItem, TCursor, TId extends string | number> {
 }
 ```
 
-Infini does not require a total count, global index, comparable cursors, or a
-server revision.
-
-## The four invariants
-
-### 1. IDs are stable
+## IDs are stable
 
 `ops.getId(item)` must return a string or number that:
 
 - identifies one logical item for its entire lifetime;
-- is unique within a page and across live items;
 - is never reused after that item is deleted;
 - does not change when the item content changes.
 
-If an item moves to another position, model it as deleting the old ID and
-inserting a new item with a new ID.
+## Pages
 
-### 2. Pages are contiguous
+- Pages use canonical content order. Always return `items` from before to after, even for a `"before"` fetch.
+- The order of items should never change. If an item moves to another position, remove the old item and
+  inserting a new item with a new ID. If you are shifting to different views, recreate the controller instance.
+- When nothing left to load, set exhausted properly to avoid spamming requests. If appending/prepending can happen, see Live Data.
 
-Between the first and last returned items, do not silently omit an item that
-belongs to the same server view. Filters should therefore be part of the
-Provider's sequence definition, not applied inconsistently per request.
+## Cursors
 
-### 3. Pages use canonical content order
+`TCursor` can be a timestamp, database token, or compound object. Infini
+only stores it and returns it to the Provider as is via `ops.getCursor`.
+If deletion is rare or impossible, you can even use ID as cursor.
 
-Always return `items` from before to after, even for a `"before"` fetch. Do not
-reverse the array to match request direction.
+Both inclusive or exclusive edge semantics are supported. Dedupe is handled automatically as long as IDs are stable.
 
-### 4. Boundary flags are truthful
-
-`exhaustedBefore` means there is no content before the first returned item.
-`exhaustedAfter` means there is no content after the last. `false` means only
-“there may be more.”
-
-An empty fetch must exhaust the requested side. An empty bootstrap is valid
-only when both sides are exhausted.
-
-## Cursors are yours
-
-`TCursor` can be an ID, timestamp, database token, or compound object. Infini
-only stores it and returns it to the Provider via `ops.getCursor`.
-
-Choose and document inclusive or exclusive edge semantics. Inclusive pages are
-usually easiest to make contiguous:
-
-```text
-known items:          A B C D
-fetch after cursor D:       D E F G
-merged result:        A B C D E F G
-```
-
-The repeated `D` is deduplicated by stable ID and acts as proof of overlap.
-Exclusive pages can work, but the response must still be the true immediate
-continuation.
+| stage                  | layout          |
+| ---------------------- | --------------- |
+| Known (`getCursor(D)`) | `A B C D`       |
+| Response (inclusive)   | `D E F G`       |
+| Merged                 | `A B C D E F G` |
 
 ## `targetSize` is measured in pixels
 
 Infini asks for enough content to cover a visual target. The Provider will
-rarely know exact unrendered heights, so use a reasonable average, cached
-measurements, or server metadata:
+rarely know exact heights without doing real layout, so use a reasonable average.
 
 ```ts
 const approximateRows = Math.ceil(targetSize / 72) + 4;
 ```
 
-Returning more is safe; extra rows become Buffer. Returning a little less at a
-real content boundary is also safe. An open bootstrap that remains shorter than
-the visible viewport after measurement is rejected, because showing it would
-expose a false gap.
-
-## A practical REST Provider
-
-Assume the server accepts `around`, `before`, and `after` cursors and always
-returns canonical order:
-
-```ts
-type ApiPage = {
-    messages: Message[];
-    hasBefore: boolean;
-    hasAfter: boolean;
-};
-
-async function requestPage(
-    params: URLSearchParams,
-    signal: AbortSignal,
-): Promise<Page<Message>> {
-    const response = await fetch(`/api/messages?${params}`, { signal });
-    if (!response.ok) throw new Error(`Messages: ${response.status}`);
-    const page: ApiPage = await response.json();
-
-    return {
-        items: page.messages,
-        exhaustedBefore: !page.hasBefore,
-        exhaustedAfter: !page.hasAfter,
-    };
-}
-
-const provider: Provider<Message, string, string> = {
-    bootstrap({ cursor, targetSize, signal }) {
-        return requestPage(
-            new URLSearchParams({
-                around: cursor ?? "",
-                pixels: String(targetSize),
-            }),
-            signal,
-        );
-    },
-
-    fetch({ cursor, direction, targetSize, signal }) {
-        return requestPage(
-            new URLSearchParams({
-                [direction]: cursor,
-                pixels: String(targetSize),
-            }),
-            signal,
-        );
-    },
-};
-```
+Returning more or less is safe. If there's extra, they will be kept in Buffer. If there's less, Infini would help fetch more (though it would make bootstrap much slower).
 
 ## When to implement `locateOffset`
 
@@ -206,22 +130,10 @@ controller.insertExternal({
 
 controller.deleteExternal(event.ids);
 controller.updateExternal(event.items);
+controller.reopen("after");
 ```
 
-Events for one ordered sequence must be ordered, not omitted, and eventually
-delivered. A response should reflect data at least as fresh as the moment its
-request began. Infini replays newer local events over a late response.
+Events for one ordered sequence must be ordered, not omitted, and eventually delivered. A response from provider should reflect data at least as fresh as the moment its request began. Infini replays newer local events over the last response.
 
 If a previously exhausted side receives a new boundary item, call
 `controller.reopen("after")` or `"before"` after applying the event.
-
-## Provider checklist
-
-- IDs are immutable, unique, and never reused.
-- Every page is contiguous and in canonical order.
-- Empty pages have the correct exhausted flags.
-- Edge cursor inclusion is consistent and documented.
-- `targetSize` influences batch size.
-- `signal` reaches the transport.
-- Remote travel has `locateOffset`, if the UI permits it.
-- Tests cover delayed responses, overlap, empty sources, and real boundaries.

@@ -3,11 +3,10 @@ import { defineConfig } from "vitepress";
 
 export default defineConfig({
     title: "Infini",
-    description:
-        "A virtual scrolling engine for long, bidirectional, variable-height feeds.",
+    description: "The Engine for Your Long Content.",
     cleanUrls: true,
     head: [
-        ["meta", { name: "theme-color", content: "#6955d9" }],
+        ["meta", { name: "theme-color", content: "#4265c5" }],
         [
             "link",
             { rel: "icon", href: "/infini-mark.svg", type: "image/svg+xml" },
@@ -33,7 +32,7 @@ export default defineConfig({
         nav: [
             { text: "Guides", link: "/guide/introduction" },
             { text: "Playground", link: "/playground" },
-            { text: "API", link: "/reference/configuration" },
+            { text: "Reference", link: "/reference/configuration" },
         ],
         sidebar: {
             "/guide/": [
@@ -42,28 +41,20 @@ export default defineConfig({
                     items: [
                         { text: "Introduction", link: "/guide/introduction" },
                         { text: "Quick start", link: "/guide/quick-start" },
-                        { text: "Provider contract", link: "/guide/provider" },
-                    ],
-                },
-                {
-                    text: "Using Infini",
-                    items: [
-                        { text: "React wrapper", link: "/guide/react" },
-                        { text: "Headless interface", link: "/guide/headless" },
+                        {
+                            text: "Write your provider",
+                            link: "/guide/provider",
+                        },
                         {
                             text: "Navigation & live updates",
                             link: "/guide/navigation-and-updates",
-                        },
-                        {
-                            text: "Errors & troubleshooting",
-                            link: "/guide/errors",
                         },
                     ],
                 },
             ],
             "/reference/": [
                 {
-                    text: "API reference",
+                    text: "Reference",
                     items: [
                         {
                             text: "Configuration",
@@ -71,6 +62,11 @@ export default defineConfig({
                         },
                         { text: "Controller", link: "/reference/controller" },
                         { text: "Snapshot", link: "/reference/snapshot" },
+                        { text: "React wrapper", link: "/reference/react" },
+                        {
+                            text: "Headless interface (wip)",
+                            link: "/reference/headless",
+                        },
                     ],
                 },
             ],

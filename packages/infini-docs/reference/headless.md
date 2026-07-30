@@ -5,30 +5,27 @@ description: Use Infini with custom DOM rendering or a framework other than Reac
 
 # Headless interface
 
-“Headless” means your application controls how each business item becomes UI.
-Infini still owns the difficult scrolling mechanics.
+Headless means your application controls how each item becomes part of UI.
 
-For browser integrations, the recommended headless stack is:
-
-```text
-your framework or view code
-        ↓ row hooks
-InfiniDomHost
-        ↓ layout + measurement
-InfiniController
-        ↓ page requests
-your Provider
-```
-
-Use `@infini-scroll/core` with `@infini-scroll/dom-support`. Only implement the
-controller's low-level measurement protocol yourself when targeting a
-non-DOM platform or authoring another physical adapter.
+Use `@infini-scroll/core` with `@infini-scroll/dom-support` in browser environment.
 
 ## Install and initialize
 
-```sh
-pnpm add @infini-scroll/core @infini-scroll/dom-support
+::: code-group
+
+```sh [npm]
+npm install --save @infini-scroll/core @infini-scroll/dom-support
 ```
+
+```sh [pnpm]
+pnpm add --save @infini-scroll/core @infini-scroll/dom-support
+```
+
+```sh [yarn]
+yarn add --save @infini-scroll/core @infini-scroll/dom-support
+```
+
+:::
 
 ```ts
 import { InfiniController, initializeInfini } from "@infini-scroll/core";
@@ -60,9 +57,6 @@ const controller = new InfiniController<LogEntry, string, string>({
     residentAfter: 100,
 });
 ```
-
-Construction does not start network work. This gives the physical host time to
-attach first.
 
 ## Attach a DOM host
 
@@ -122,40 +116,6 @@ controller.start();
 The element returned from `createRow` must be the final stable row root. The
 host may first place it in a hidden measurement region and later move the same
 node into the live track.
-
-## Connect another UI framework
-
-Mount one independent framework root per stable row shell:
-
-```ts
-const roots = new WeakMap<HTMLElement, FrameworkRoot>();
-
-const host = new InfiniDomHost({
-    controller,
-    container: surface,
-    scrollHost: viewport,
-
-    createRow(item) {
-        const node = document.createElement("div");
-        const root = framework.createRoot(node);
-        roots.set(node, root);
-        root.render(ItemView, { item });
-        return node;
-    },
-
-    updateRow(node, item) {
-        roots.get(node)?.render(ItemView, { item });
-    },
-
-    disposeRow(node) {
-        roots.get(node)?.unmount();
-        roots.delete(node);
-    },
-});
-```
-
-Keep framework state keyed to the row's stable ID. Never key it to the row's
-temporary rank or pixel position.
 
 ## Observe state
 
@@ -220,23 +180,3 @@ controller.dispose();
 
 Both host and controller disposal are idempotent. Do not use either object
 after it has been disposed.
-
-## Advanced: implementing a physical adapter
-
-`InfiniDomHost` is not required. A new physical adapter can subscribe directly
-to `Snapshot` and execute the protocol:
-
-1. report scroll geometry with `setView`;
-2. hidden-mount and measure `candidate`;
-3. activate it with `commitCandidate`;
-4. reconcile `layoutItems`;
-5. submit row extents with `measure`;
-6. acknowledge the exact mounted handles with `commitLayout`;
-7. apply `takeScrollCorrection`, then report observed geometry through
-   `acknowledgeScrollCorrection`;
-8. use `captureAnchor` before adapter-driven geometry changes;
-9. pin focus-bearing rows with `pin`.
-
-These calls form a transaction protocol, not a bag of optional rendering
-helpers. A DOM integration should use `InfiniDomHost` unless it genuinely needs
-different physical behavior.

@@ -219,8 +219,7 @@ const REACT = `function MessageFeed({
 
   React.useEffect(() => {
     report(
-      \`\${snapshot.phase.status} · \${snapshot.layoutItems.length} mounted · \` +
-        \`\${snapshot.mainLength} known\`,
+      \`\${snapshot.phase.status} \${snapshot.layoutItems.length} mounted \${snapshot.mainLength} known\`,
     );
   }, [report, snapshot]);
 
@@ -288,14 +287,14 @@ function MessageRow({
               className="reply-link"
               onClick={() => onReply(message.replyTo!.id)}
             >
-              #{message.replyTo.id} · {message.replyTo.author}:{" "}
+              #{message.replyTo.id} {message.replyTo.author}:{" "}
               {message.replyTo.body}
             </button>
           </blockquote>
         )}
         <header>
-          <span className="message-id">#{message.id}</span>
           <strong>{message.author}</strong>
+          <span className="message-id">#{message.id}</span>
           <time dateTime={message.createdAt}>
             {new Date(message.createdAt).toLocaleTimeString([], {
               hour: "2-digit",
@@ -392,7 +391,7 @@ export async function mount({
     reply.textContent =
       "#" +
       message.replyTo.id +
-      " · " +
+      " " +
       message.replyTo.author +
       ": " +
       message.replyTo.body;
@@ -415,7 +414,7 @@ export async function mount({
     hour: "2-digit",
     minute: "2-digit",
     });
-    header.append(messageId, author, time);
+    header.append(author, messageId, time);
 
     const body = document.createElement("p");
     body.textContent = message.body;
@@ -470,7 +469,7 @@ export async function mount({
 `;
 
 const QS_CSS = `.message-shell {
-  width: 100%;
+  width: 100%; // You would also need a limited height!
   padding: 5px 12px;
   box-sizing: border-box;
 }
