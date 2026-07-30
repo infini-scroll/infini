@@ -207,7 +207,7 @@ const REACT = `function MessageFeed({
   });
 
   const scrollToMessage = React.useCallback(
-    (id: string, alignment: "center" | "end") => {
+    (id: string, alignment?: "end") => {
       controller.jump(id, { alignment });
     },
     [controller],
@@ -250,7 +250,7 @@ const REACT = `function MessageFeed({
         renderItem={(message) => (
           <MessageRow
             message={message}
-            onReply={(id) => scrollToMessage(id, "center")}
+            onReply={(id) => scrollToMessage(id)}
           />
         )}
       />
@@ -347,103 +347,102 @@ export async function mount({
   await initializeInfini();
 
   const controller = new InfiniController<Message, string, string, string>({
-  provider: messageProvider,
-  ops: {
-    getId: (message) => message.id,
-    getCursor: (message) => message.createdAt,
-  },
-  estimateSize: messageSize,
-  defaultItemEstimate: 104,
-  initial: {
-    cursor: cursorForMessage(FIRST_UNREAD_ID),
-    target: FIRST_UNREAD_ID,
-    alignment: "start",
-  },
-  targetToCursor: cursorForMessage,
-  locateTarget: locateMessage,
-  residentBefore: 30,
-  residentAfter: 30,
+    provider: messageProvider,
+    ops: {
+      getId: (message) => message.id,
+      getCursor: (message) => message.createdAt,
+    },
+    estimateSize: messageSize,
+    defaultItemEstimate: 104,
+    initial: {
+      cursor: cursorForMessage(FIRST_UNREAD_ID),
+      target: FIRST_UNREAD_ID,
+      alignment: "start",
+    },
+    targetToCursor: cursorForMessage,
+    locateTarget: locateMessage,
+    residentBefore: 30,
+    residentAfter: 30,
   });
 
   const host = new InfiniDomHost({
-  controller,
-  container: surface,
-  scrollHost: viewport,
-  createRow(message) {
-    const shell = document.createElement("div");
-    shell.className = "message-shell";
+    controller,
+    container: surface,
+    scrollHost: viewport,
+    createRow(message) {
+      const shell = document.createElement("div");
+      shell.className = "message-shell";
 
-    if (message.id === FIRST_UNREAD_ID) {
-    const divider = document.createElement("div");
-    divider.className = "unread-divider";
-    divider.setAttribute("role", "separator");
-    divider.textContent = "Last unread message";
-    shell.append(divider);
-    }
+      if (message.id === FIRST_UNREAD_ID) {
+        const divider = document.createElement("div");
+        divider.className = "unread-divider";
+        divider.setAttribute("role", "separator");
+        divider.textContent = "Last unread message";
+        shell.append(divider);
+      }
 
-    const article = document.createElement("article");
-    article.className = "message-row";
-    if (message.replyTo) {
-    const quote = document.createElement("blockquote");
-    const reply = document.createElement("button");
-    reply.type = "button";
-    reply.className = "reply-link";
-    reply.textContent =
-      "#" +
-      message.replyTo.id +
-      " " +
-      message.replyTo.author +
-      ": " +
-      message.replyTo.body;
-    reply.addEventListener("click", () => {
-      controller.jump(message.replyTo!.id, { alignment: "center" });
-    });
-    quote.append(reply);
-    article.append(quote);
-    }
+      const article = document.createElement("article");
+      article.className = "message-row";
+      if (message.replyTo) {
+        const quote = document.createElement("blockquote");
+        const reply = document.createElement("button");
+        reply.type = "button";
+        reply.className = "reply-link";
+        reply.textContent =
+          "#" +
+          message.replyTo.id +
+          " " +
+          message.replyTo.author +
+          ": " +
+          message.replyTo.body;
+        reply.addEventListener("click", () => {
+          controller.jump(message.replyTo!.id);
+        });
+        quote.append(reply);
+        article.append(quote);
+      }
 
-    const header = document.createElement("header");
-    const messageId = document.createElement("span");
-    messageId.className = "message-id";
-    messageId.textContent = "#" + message.id;
-    const author = document.createElement("strong");
-    author.textContent = message.author;
-    const time = document.createElement("time");
-    time.dateTime = message.createdAt;
-    time.textContent = new Date(message.createdAt).toLocaleTimeString([], {
-    hour: "2-digit",
-    minute: "2-digit",
-    });
-    header.append(author, messageId, time);
+      const header = document.createElement("header");
+      const messageId = document.createElement("span");
+      messageId.className = "message-id";
+      messageId.textContent = "#" + message.id;
+      const author = document.createElement("strong");
+      author.textContent = message.author;
+      const time = document.createElement("time");
+      time.dateTime = message.createdAt;
+      time.textContent = new Date(message.createdAt).toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+      header.append(author, messageId, time);
 
-    const body = document.createElement("p");
-    body.textContent = message.body;
-    article.append(header, body);
-    shell.append(article);
-    return shell;
-  },
+      const body = document.createElement("p");
+      body.textContent = message.body;
+      article.append(header, body);
+      shell.append(article);
+      return shell;
+    },
   });
 
   const removeGoToBottom = addGoToBottom(viewport, () => {
-  controller.jump(LAST_MESSAGE_ID, { alignment: "end" });
+    controller.jump(LAST_MESSAGE_ID, { alignment: "end" });
   });
   const unsubscribe = controller.subscribe(() => {
-  const snapshot = controller.getSnapshot();
-  report(
-    \`\${snapshot.phase.status} \${snapshot.layoutItems.length} mounted \${snapshot.mainLength} known\`,
-  );
+    const snapshot = controller.getSnapshot();
+    report(
+      \`\${snapshot.phase.status} \${snapshot.layoutItems.length} mounted \${snapshot.mainLength} known\`,
+    );
   });
 
   controller.start();
 
   return () => {
-  removeGoToBottom();
-  unsubscribe();
-  host.dispose();
-  controller.dispose();
+    removeGoToBottom();
+    unsubscribe();
+    host.dispose();
+    controller.dispose();
   };
-}
-`;
+}`;
 
 const PG_REACT = `import * as React from "react";
 import { createRoot } from "react-dom/client";
@@ -560,7 +559,7 @@ const QS_CUSTOM_WASM =
 export const playgrounds = [
     {
         name: "DOM",
-        label: "Raw DOM",
+        label: "DOM",
         fileName: "quick-start.ts",
         language: "typescript",
         default: false,
@@ -568,7 +567,7 @@ export const playgrounds = [
     },
     {
         name: "React",
-        label: "React (TSX)",
+        label: "React",
         fileName: "quick-start.tsx",
         language: "typescript",
         default: true,

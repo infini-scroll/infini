@@ -212,13 +212,3 @@ DOM measurement, so the destination becomes locally exact.
 - Use the [Headless interface](/guide/headless) with Vue, Svelte, Solid, or
   custom DOM rendering.
 - Modify and run a complete example in the [Playground](/playground).
-
-## Custom Wasm loading
-
-Pass a URL, `Response`, byte buffer, or compiled `WebAssembly.Module` when the
-default asset location is unsuitable:
-
-<div v-html="highlightedCodeBlocks.quickStartCustomWasm"></div>
-
-With server-side rendering, initialize in a browser entry point. Controllers
-and DOM hosts require the initialized module and a live document.
