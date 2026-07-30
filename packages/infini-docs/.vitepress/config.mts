@@ -5,6 +5,7 @@ export default defineConfig({
     title: "Infini",
     description: "The Engine for Your Long Content.",
     cleanUrls: true,
+    lastUpdated: true,
     head: [
         ["meta", { name: "theme-color", content: "#4265c5" }],
         [
@@ -12,6 +13,9 @@ export default defineConfig({
             { rel: "icon", href: "/infini-mark.svg", type: "image/svg+xml" },
         ],
     ],
+    sitemap: {
+        hostname: "https://infini.flysoftbeta.top",
+    },
     vite: {
         resolve: {
             alias: {
