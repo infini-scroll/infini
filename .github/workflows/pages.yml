@@ -31,7 +31,13 @@ jobs:
               uses: actions/setup-node@v7
               with:
                   node-version: 24
+                  registry-url: https://registry.npmjs.org/
                   cache: pnpm
+
+            - name: Install Rust tools
+              uses: taiki-e/install-action@v2
+              with:
+                  tool: rust+wasm32-unknown-unknown,wasm-pack
 
             - name: Configure GitHub Pages
               uses: actions/configure-pages@v5
@@ -40,6 +46,9 @@ jobs:
               run: pnpm ci
               env:
                   PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: "1"
+
+            - name: Build the latest lib for docs
+              run: pnpm run build
 
             - name: Build docs site
               run: pnpm run select:docs build
