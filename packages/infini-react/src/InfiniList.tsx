@@ -144,8 +144,17 @@ export function InfiniList<
     const hostRef = useRef<InfiniDomHost<TItem, TCursor, TId, TTarget> | null>(
         null,
     );
+    const onHostChangeRef = useRef(onHostChange);
     const store = useMemo(() => new PortalStore<TItem, TId>(), []);
     useSyncExternalStore(store.subscribe, store.getSnapshot, store.getSnapshot);
+
+    useLayoutEffect(() => {
+        const previous = onHostChangeRef.current;
+        if (previous === onHostChange) return;
+        previous?.(null);
+        onHostChangeRef.current = onHostChange;
+        onHostChange?.(hostRef.current);
+    }, [onHostChange]);
 
     useLayoutEffect(() => {
         const container = containerRef.current;
@@ -178,8 +187,13 @@ export function InfiniList<
             },
         });
         hostRef.current = host;
+        onHostChangeRef.current?.(host);
         return () => {
-            hostRef.current = null;
+            // A layout-option change replaces the host before this component
+            // unmounts. Publish that transition here, alongside disposal, so
+            // consumers can never retain a disposed host between effects.
+            if (hostRef.current === host) hostRef.current = null;
+            onHostChangeRef.current?.(null);
             host.dispose();
         };
     }, [
@@ -193,13 +207,6 @@ export function InfiniList<
         scrollHost,
         store,
     ]);
-
-    useLayoutEffect(() => {
-        onHostChange?.(hostRef.current);
-        return () => {
-            onHostChange?.(null);
-        };
-    }, [onHostChange]);
 
     return (
         <div
