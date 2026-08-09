@@ -249,7 +249,10 @@ export class InfiniController<
         );
         if (unchanged) return;
         this.view = next;
-        if (this.engineReady) this.engine.setView(this.view);
+        if (this.engineReady) {
+            this.engine.setView(this.view);
+            this.reconcileForegroundAfterViewIntent();
+        }
         this.publish();
         this.pumpEffects();
     }
@@ -575,6 +578,32 @@ export class InfiniController<
         this.effects.clear();
         this.listeners.clear();
         this.engine.free();
+    }
+
+    private reconcileForegroundAfterViewIntent(): void {
+        if (!this.foregroundEffect) return;
+        const active = this.effects.get(this.foregroundEffect);
+        if (
+            active?.raw.kind !== RawEffectKind.Seek ||
+            active.raw.targetToken !== 0
+        ) {
+            return;
+        }
+        const live = this.engine.effect(this.foregroundEffect);
+        if (live != null && live.state !== RawEffectState.Detached) return;
+
+        // Core detached this predictive seek because newer physical scroll intent
+        // returned to continuous territory or superseded it. Keep the async work
+        // alive so a late successful page can still become stale/reusable, but it
+        // no longer owns visible phase or hidden candidate staging.
+        if (this.candidate?.effectId === this.foregroundEffect) {
+            this.candidate = null;
+        }
+        this.foregroundEffect = 0;
+        this.phase = {
+            status: "ready",
+            empty: this.engine.snapshot().mainLength === 0,
+        };
     }
 
     private pumpEffects(): void {

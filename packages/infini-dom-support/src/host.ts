@@ -1012,6 +1012,11 @@ export class InfiniDomHost<
 
     private handleScroll = (): void => {
         const metrics = measureHost(this.scrollHost, this.container);
+        // Report native scroll intent immediately instead of waiting for the next
+        // animation frame. Provider promises can resolve between the scroll event
+        // and rAF; delaying this update lets a stale predictive seek commit and
+        // overwrite the user's newer position. DOM reconciliation remains batched.
+        this.setControllerView(metrics, metrics.localScroll);
         const snapshot = this.controller.getSnapshot();
         this.logFrameEvent(0, "native-scroll", {
             phase: snapshot.phase.status,

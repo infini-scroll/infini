@@ -9,6 +9,7 @@ use crate::types::{
 
 const DEFAULT_BLANK_VIEWPORTS: f64 = 20.0;
 const DEFAULT_STALE_MISS_LIMIT: u32 = 3;
+const SCROLL_INTENT_EPSILON: f64 = 0.01;
 
 /// Read-only public state of one known contiguous item island.
 ///
@@ -183,6 +184,11 @@ pub struct Engine {
     pinned: HashSet<Handle>,
     anchor: Option<Anchor>,
     scroll_correction: Option<f64>,
+    /// Physical start of Main after a predictive seek. `None` uses the
+    /// ordinary fixed before runway. Keeping this origin movable lets a
+    /// predictive candidate materialize under the user's current scrollTop
+    /// instead of recentering the physical surface on every seek.
+    floating_origin: Option<f64>,
     released: VecDeque<Handle>,
     diagnostics: Diagnostics,
 }
@@ -225,6 +231,7 @@ impl Engine {
             pinned: HashSet::new(),
             anchor: None,
             scroll_correction: None,
+            floating_origin: None,
             released: VecDeque::new(),
             diagnostics: Diagnostics::default(),
         }
@@ -263,6 +270,7 @@ impl Engine {
         self.pinned.clear();
         self.anchor = None;
         self.scroll_correction = None;
+        self.floating_origin = None;
         self.layout_rows.clear();
         self.bump_layout_revision();
         self.released.extend(all_handles);
@@ -293,6 +301,16 @@ impl Engine {
         let normalized = view.normalized();
         if self.view == normalized {
             return;
+        }
+        // `set_view` is the user-intent path. If physical scroll moved before a
+        // pending framework correction landed, the newer user position wins.
+        // Correction landings use `acknowledge_scroll_correction`, so they never
+        // pass through this cancellation path.
+        let scroll_intent_changed =
+            (self.view.scroll - normalized.scroll).abs() >= SCROLL_INTENT_EPSILON;
+        if scroll_intent_changed && self.scroll_correction.is_some() {
+            self.scroll_correction = None;
+            self.anchor = None;
         }
         let preserve_anchor = self.main.is_some()
             && self.scroll_correction.is_none()
@@ -392,15 +410,23 @@ impl Engine {
         self.main().map_or(0.0, Island::extent)
     }
 
-    /// Returns the fixed twenty-viewport runway for an open edge, otherwise zero.
+    /// Returns the physical runway for an open edge, otherwise zero.
+    ///
+    /// The after side remains the ordinary fixed twenty-viewports. The before
+    /// side may float after a predictive seek so activating a distant candidate
+    /// does not force `scrollTop` back to the fixed runway origin.
     pub fn blank_extent(&self, direction: Direction) -> f64 {
         let open = self
             .main()
             .is_some_and(|island| island.edge(direction) == EdgeState::Open);
-        if open {
-            self.view.viewport * self.blank_viewports
-        } else {
-            0.0
+        if !open {
+            return 0.0;
+        }
+        match direction {
+            Direction::Before => self
+                .floating_origin
+                .unwrap_or(self.view.viewport * self.blank_viewports),
+            Direction::After => self.view.viewport * self.blank_viewports,
         }
     }
 
@@ -740,7 +766,14 @@ impl Engine {
         // Stale merging may prepend/append rows around the activated target.
         // Restore only after the final main sequence is known; otherwise the
         // correction still points at the candidate-local pre-merge position.
-        self.restore_target(effect.target_handle, effect.alignment);
+        if effect.kind == EffectKind::Seek && effect.target_token == 0 {
+            self.restore_predictive_target(effect.target_handle, effect.alignment);
+        } else {
+            // Explicit jumps/bootstrap retain their requested alignment semantics
+            // and restart from the ordinary fixed physical runway.
+            self.floating_origin = None;
+            self.restore_target(effect.target_handle, effect.alignment);
+        }
         self.recompute_resident();
         self.settle();
         true
@@ -1189,8 +1222,30 @@ impl Engine {
             BlankZone::After if allow_predictive_seek => {
                 self.schedule_seek(Direction::After);
             }
-            BlankZone::None => self.schedule_edge_fetches(),
+            BlankZone::None => {
+                // Returning to continuously loaded territory supersedes every
+                // in-flight predictive intent. Late results remain reusable as
+                // stale islands, but may no longer replace Main.
+                self.detach_predictive_seeks();
+                self.schedule_edge_fetches();
+            }
             BlankZone::Before | BlankZone::After => {}
+        }
+    }
+
+    fn detach_predictive_seeks(&mut self) {
+        let pending = self
+            .effects
+            .values()
+            .filter(|effect| {
+                effect.kind == EffectKind::Seek
+                    && effect.target_token == 0
+                    && effect.state != EffectState::Detached
+            })
+            .map(|effect| (effect.id, effect.direction))
+            .collect::<Vec<_>>();
+        for (id, direction) in pending {
+            let _ = self.detach_effect_as(id, direction);
         }
     }
 
@@ -1469,6 +1524,12 @@ impl Engine {
         } else if owner_role == Some(IslandRole::StaleAfter) {
             self.try_merge_stale(Direction::After, true);
         }
+        if self
+            .main()
+            .is_some_and(|main| main.before != EdgeState::Open)
+        {
+            self.floating_origin = None;
+        }
         let owner_grew = self
             .islands
             .get(&owner)
@@ -1670,6 +1731,9 @@ impl Engine {
             );
             main.set_edge(direction, stale_edge);
         }
+        if direction == Direction::Before && stale_edge != EdgeState::Open {
+            self.floating_origin = None;
+        }
         self.clear_stale_slot(direction);
         self.aliases.insert(stale_id, main_id);
         self.drop_island(stale_id);
@@ -1842,10 +1906,8 @@ impl Engine {
         self.release_unreferenced(released_candidates);
     }
 
-    fn restore_target(&mut self, target: Handle, alignment: Alignment) {
-        let Some(main) = self.main() else {
-            return;
-        };
+    fn target_local_visible_start(&self, target: Handle, alignment: Alignment) -> Option<f64> {
+        let main = self.main()?;
         let target = if target != INVALID_HANDLE && main.sequence.contains(target) {
             target
         } else {
@@ -1859,17 +1921,46 @@ impl Engine {
                 .unwrap_or(INVALID_HANDLE)
         };
         let mut diagnostics = Diagnostics::default();
-        let Some(row) = main.sequence.item(target, &mut diagnostics) else {
-            return;
-        };
+        let row = main.sequence.item(target, &mut diagnostics)?;
         let visible = self.view.visible_extent();
-        let local_visible_start = match alignment {
+        Some(match alignment {
             Alignment::Start | Alignment::Nearest => row.start,
             Alignment::Center => row.start + row.extent * 0.5 - visible * 0.5,
             Alignment::End => row.start + row.extent - visible,
+        })
+    }
+
+    fn restore_target(&mut self, target: Handle, alignment: Alignment) {
+        let Some(local_visible_start) = self.target_local_visible_start(target, alignment) else {
+            return;
         };
         self.scroll_correction =
             Some(self.island_origin() + local_visible_start - self.view.inset_start);
+    }
+
+    fn restore_predictive_target(&mut self, target: Handle, alignment: Alignment) {
+        let Some(local_visible_start) = self.target_local_visible_start(target, alignment) else {
+            return;
+        };
+
+        // A predictive seek represents the user's current physical scroll intent.
+        // Move Main underneath that waterline instead of moving the waterline back
+        // to the fixed twenty-viewport runway. If the before edge is exhausted or
+        // the ideal origin would be negative, fall back to the smallest correction
+        // required by the physical surface boundary.
+        let ideal_origin =
+            self.view.scroll + self.view.inset_start - local_visible_start;
+        self.floating_origin = self
+            .main()
+            .is_some_and(|main| main.before == EdgeState::Open)
+            .then_some(ideal_origin.max(0.0));
+        let desired_scroll =
+            self.island_origin() + local_visible_start - self.view.inset_start;
+        if (desired_scroll - self.view.scroll).abs() >= SCROLL_INTENT_EPSILON {
+            self.scroll_correction = Some(desired_scroll);
+        } else {
+            self.scroll_correction = None;
+        }
     }
 
     fn restore_anchor(&mut self) {
@@ -2191,6 +2282,89 @@ mod tests {
         assert!(engine.effects.values().any(|effect| {
             effect.kind == EffectKind::Seek && effect.direction == Direction::Before
         }));
+    }
+
+    #[test]
+    fn predictive_seek_floats_origin_and_preserves_physical_scroll() {
+        let mut engine = ready_engine();
+        engine.set_view(ViewMetrics {
+            scroll: 3_900.0,
+            ..engine.view()
+        });
+        let seek = engine
+            .effects
+            .values()
+            .find(|effect| {
+                effect.kind == EffectKind::Seek
+                    && effect.target_token == 0
+                    && effect.state == EffectState::Pending
+            })
+            .unwrap()
+            .id;
+        assert_eq!(
+            engine.commit_effect_items(
+                seek,
+                &items(100, 12, 10.0),
+                false,
+                false,
+                105,
+                Alignment::Center,
+            ),
+            CommitDisposition::Candidate
+        );
+        assert!(engine.commit_candidate(seek));
+
+        assert_eq!(engine.take_scroll_correction(), None);
+        assert!((engine.view().scroll - 3_900.0).abs() < SCROLL_INTENT_EPSILON);
+        assert!((engine.visible_window().start - 5.0).abs() < SCROLL_INTENT_EPSILON);
+        assert!(engine.island_origin() > 3_800.0);
+    }
+
+    #[test]
+    fn returning_from_predict_zone_detaches_the_old_seek() {
+        let mut engine = ready_engine();
+        let original_main = engine.main_id();
+        engine.set_view(ViewMetrics {
+            scroll: 3_900.0,
+            ..engine.view()
+        });
+        let seek = engine
+            .effects
+            .values()
+            .find(|effect| effect.kind == EffectKind::Seek && effect.target_token == 0)
+            .unwrap()
+            .id;
+
+        engine.set_view(ViewMetrics {
+            scroll: 2_050.0,
+            ..engine.view()
+        });
+        assert_eq!(engine.effect(seek).unwrap().state, EffectState::Detached);
+        assert_eq!(engine.main_id(), original_main);
+        assert_eq!(
+            engine.commit_effect_items(
+                seek,
+                &items(100, 12, 10.0),
+                false,
+                false,
+                105,
+                Alignment::Center,
+            ),
+            CommitDisposition::StoredStale
+        );
+        assert_eq!(engine.main_id(), original_main);
+    }
+
+    #[test]
+    fn newer_scroll_intent_cancels_an_unapplied_correction() {
+        let mut engine = ready_engine();
+        engine.scroll_correction = Some(2_000.0);
+        engine.set_view(ViewMetrics {
+            scroll: 2_050.0,
+            ..engine.view()
+        });
+        assert_eq!(engine.take_scroll_correction(), None);
+        assert_eq!(engine.view().scroll, 2_050.0);
     }
 
     #[test]
